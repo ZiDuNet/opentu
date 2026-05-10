@@ -11,7 +11,7 @@
 $drawer-min-width: 375px;
 $border-radius: 12px;
 $drawer-header-height: 108px; // 增加了高度以适应新设计
-$drawer-input-height: 160px;
+$drawer-input-max-height: 280px;
 
 // ============================================================================
 // Chat Drawer Container
@@ -191,7 +191,9 @@ $drawer-input-height: 160px;
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    height: calc(100vh - #{$drawer-header-height});
+    flex: 1;
+    min-height: 0;
+    height: auto;
   }
 
   &__close-btn {
@@ -781,9 +783,7 @@ $drawer-input-height: 160px;
     }
 
     &__content {
-      height: calc(
-        100vh - #{$drawer-header-height} - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)
-      );
+      min-height: 0;
     }
   }
 
@@ -805,6 +805,7 @@ $drawer-input-height: 160px;
   .enhanced-chat-input {
     padding: $spacing-sm $spacing-md;
     padding-bottom: calc(env(safe-area-inset-bottom, 0px) + #{$spacing-sm});
+    max-height: min(42vh, 260px);
 
     &__form {
       padding: 6px;
@@ -815,7 +816,7 @@ $drawer-input-height: 160px;
       font-size: 15px;
     }
 
-    &__send {
+    &__control-shell .ai-input-bar__send-btn {
       width: 36px;
       height: 36px;
       min-width: 36px;
@@ -892,7 +893,7 @@ $drawer-input-height: 160px;
   // 输入区域更紧凑
   .enhanced-chat-input {
     padding: $spacing-xs $spacing-sm;
-    max-height: 140px;
+    max-height: min(46vh, 220px);
 
     &__form {
       padding: 4px;
@@ -967,7 +968,7 @@ $drawer-input-height: 160px;
       height: 28px;
     }
 
-    &__send {
+    &__control-shell .ai-input-bar__send-btn {
       width: 32px;
       height: 32px;
       min-width: 32px;
@@ -995,7 +996,9 @@ $drawer-input-height: 160px;
 .chat-section {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - #{$drawer-header-height} - #{$drawer-input-height});
+  flex: 1;
+  min-height: 0;
+  height: auto;
   overflow: hidden;
   padding: 0 !important;
 }
@@ -1326,20 +1329,22 @@ $drawer-input-height: 160px;
 .enhanced-chat-input {
   position: relative;
   flex-shrink: 0;
-  max-height: $drawer-input-height;
+  max-height: $drawer-input-max-height;
+  max-height: min(36vh, #{$drawer-input-max-height});
   padding: $spacing-md $spacing-lg;
   border-top: 1px solid var(--td-component-border);
   background: #ffffff;
   overflow-y: auto;
+  overscroll-behavior: contain;
 
   // 选中内容预览（对齐 AIInputBar 样式）
   &__selection {
     display: flex;
     flex-wrap: wrap;
     gap: $spacing-sm;
-    padding-bottom: $spacing-sm;
-    margin-bottom: $spacing-sm;
-    border-bottom: 1px dashed var(--td-component-border);
+    padding: 0 12px 2px;
+    margin: 0;
+    border-bottom: none;
     align-items: center;
   }
 
@@ -1393,11 +1398,11 @@ $drawer-input-height: 160px;
 
   &__form {
     display: flex;
-    align-items: flex-start;
-    gap: $spacing-sm;
+    flex-direction: column;
+    gap: 6px;
     background: #ffffff;
-    border-radius: 16px;
-    padding: 8px;
+    border-radius: 24px;
+    padding: 12px 12px 10px;
     border: 1px solid var(--td-component-border);
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
     transition: all 0.3s ease;
@@ -1410,7 +1415,27 @@ $drawer-input-height: 160px;
 
   &__input-wrapper {
     position: relative;
-    flex: 1;
+    width: 100%;
+  }
+
+  &__footer {
+    width: 100%;
+  }
+
+  &__control-shell.ai-input-bar {
+    position: static;
+    inset: auto;
+    transform: none;
+    z-index: auto;
+    max-width: none;
+    padding: 0;
+    pointer-events: auto;
+    align-items: stretch;
+    gap: 0;
+
+    .ai-input-bar__bottom-bar {
+      min-height: 40px;
+    }
   }
 
   // 高亮背景层 - 显示模型/参数/个数标签的背景色块
@@ -1470,9 +1495,9 @@ $drawer-input-height: 160px;
     position: relative;
     z-index: 2;
     width: 100%;
-    min-height: 88px;
+    min-height: 52px;
     max-height: 120px;
-    padding: 10px 12px;
+    padding: 4px 12px 0;
     background: transparent;
     border: none;
     border-radius: 12px;
@@ -1486,45 +1511,6 @@ $drawer-input-height: 160px;
 
     &::placeholder {
       color: var(--td-text-color-placeholder);
-    }
-  }
-
-  &__send {
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #f3f4f6;
-    border: none;
-    border-radius: 50%;
-    color: #9ca3af;
-    cursor: not-allowed;
-    transition: all 0.2s ease;
-    flex-shrink: 0;
-
-    &--active {
-      background: #f59e0b;
-      color: #fff;
-      cursor: pointer;
-      box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
-
-      &:hover {
-        background: #d97706;
-        transform: scale(1.05);
-      }
-    }
-
-    &:disabled {
-      background: #f3f4f6;
-      color: #9ca3af;
-      cursor: not-allowed;
-      box-shadow: none;
-    }
-
-    svg {
-      width: 20px;
-      height: 20px;
     }
   }
 }

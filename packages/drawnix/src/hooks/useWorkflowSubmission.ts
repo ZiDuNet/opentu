@@ -57,7 +57,10 @@ export interface UseWorkflowSubmissionReturn {
     parsedInput: ParsedGenerationParams,
     referenceImages: string[],
     retryContext?: WorkflowRetryContext,
-    existingWorkflow?: LegacyWorkflowDefinition
+    existingWorkflow?: LegacyWorkflowDefinition,
+    options?: {
+      appendToCurrentChatSession?: boolean;
+    }
   ) => Promise<{ workflowId: string; usedSW: boolean }>;
   /** Cancel a workflow */
   cancelWorkflow: (workflowId: string) => Promise<void>;
@@ -140,6 +143,7 @@ export function useWorkflowSubmission(
   useTaskWorkflowSync({
     workflowControl,
     updateWorkflowMessage: chatDrawerControl.updateWorkflowMessage,
+    syncWorkflowTaskUpdate: chatDrawerControl.syncWorkflowTaskUpdate,
     boardRef,
     workZoneIdRef,
   });
@@ -453,7 +457,10 @@ export function useWorkflowSubmission(
     parsedInput: ParsedGenerationParams,
     referenceImages: string[],
     retryContext?: WorkflowRetryContext,
-    existingWorkflow?: LegacyWorkflowDefinition
+    existingWorkflow?: LegacyWorkflowDefinition,
+    options?: {
+      appendToCurrentChatSession?: boolean;
+    }
   ): Promise<{ workflowId: string; usedSW: boolean }> => {
     // Use existing workflow if provided, otherwise create a new one
     const legacyWorkflow = existingWorkflow || convertToWorkflow(parsedInput, referenceImages);
@@ -511,6 +518,7 @@ export function useWorkflowSubmission(
       workflow: workflowMessageData,
       textModel,
       autoOpen: false,
+      appendToCurrentSession: options?.appendToCurrentChatSession,
     });
 
     // Always use main thread execution
