@@ -174,6 +174,7 @@ interface FramePanelProps {
     mode?: SelectionMode;
     onSelect?: (asset: Asset) => void | Promise<void>;
     selectButtonText?: string;
+    batchSelectButtonText?: string;
     keepProjectDrawerOpen?: boolean;
   }) => void;
 }

@@ -345,6 +345,8 @@ export interface MediaLibraryModalProps {
   onSelectMultiple?: (assets: Asset[]) => void | Promise<void>;
   /** 自定义选择按钮文本，默认为"使用到画板" */
   selectButtonText?: string;
+  /** 自定义批量操作按钮文本 */
+  batchSelectButtonText?: string;
 }
 
 export interface AssetGridItemProps {
@@ -397,6 +399,7 @@ export interface MediaLibraryGridProps {
   onUploadClick?: () => void;
   storageStatus?: StorageStatus | null;
   onSelectMultiple?: (assets: Asset[]) => void | Promise<void>;
+  batchSelectButtonText?: string;
 }
 
 export interface MediaLibraryStorageBarProps {

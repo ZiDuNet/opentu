@@ -363,6 +363,7 @@ export const CreationToolbar: React.FC<ToolbarSectionProps> = ({
         onSelect: handleInsertAsset,
         onSelectMultiple: handleInsertMultipleAssets,
         selectButtonText: '插入',
+        batchSelectButtonText: '批量插入画布',
       });
       return;
     }
@@ -963,6 +964,7 @@ export const CreationToolbar: React.FC<ToolbarSectionProps> = ({
         onSelect={handleInsertAsset}
         onSelectMultiple={handleInsertMultipleAssets}
         selectButtonText="插入"
+        batchSelectButtonText="批量插入画布"
       />
     </Suspense>
   ) : null;

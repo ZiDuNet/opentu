@@ -428,6 +428,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
           filterType={AssetType.IMAGE}
           onSelect={handleMediaLibrarySelect}
           onSelectMultiple={multiple ? handleMediaLibrarySelectMultiple : undefined}
+          batchSelectButtonText={multiple ? '批量插入对话框' : undefined}
         />
       )}
     </div>

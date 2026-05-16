@@ -287,6 +287,7 @@ export function MediaLibraryGrid({
   onUploadClick,
   storageStatus,
   onSelectMultiple,
+  batchSelectButtonText = '批量插入',
 }: MediaLibraryGridProps) {
   const {
     assets,
@@ -1420,7 +1421,7 @@ export function MediaLibraryGrid({
                   取消
                 </Button>
                 {onSelectMultiple && (
-                  <HoverTip content="将选中的素材批量插入画布" placement="bottom">
+                  <HoverTip content={batchSelectButtonText} placement="bottom">
                     <Button
                       variant="base"
                       theme="primary"
@@ -1434,7 +1435,7 @@ export function MediaLibraryGrid({
                       }}
                       data-track="grid_batch_insert"
                     >
-                      批量插入 ({filteredSelectedCount})
+                      {batchSelectButtonText} ({filteredSelectedCount})
                     </Button>
                   </HoverTip>
                 )}

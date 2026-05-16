@@ -80,6 +80,7 @@ export interface ProjectDrawerProps {
   onOpenMediaLibrary?: (
     config?: Partial<MediaLibraryConfig> & {
       selectButtonText?: string;
+      batchSelectButtonText?: string;
     }
   ) => void;
 }

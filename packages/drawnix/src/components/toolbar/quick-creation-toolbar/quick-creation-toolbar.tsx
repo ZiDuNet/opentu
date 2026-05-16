@@ -64,6 +64,7 @@ export interface QuickCreationToolbarProps {
     onSelect?: (asset: Asset) => void | Promise<void>;
     onSelectMultiple?: (assets: Asset[]) => void | Promise<void>;
     selectButtonText?: string;
+    batchSelectButtonText?: string;
   }) => void;
 }
 
@@ -284,6 +285,7 @@ export const QuickCreationToolbar: React.FC<QuickCreationToolbarProps> = ({
         onSelect: handleInsertAsset,
         onSelectMultiple: handleInsertMultipleAssets,
         selectButtonText: t('toolbar.insert' as any) || '插入',
+        batchSelectButtonText: '批量插入画布',
       });
       onClose();
       return;
@@ -500,6 +502,7 @@ export const QuickCreationToolbar: React.FC<QuickCreationToolbarProps> = ({
             onSelect={handleInsertAsset}
             onSelectMultiple={handleInsertMultipleAssets}
             selectButtonText={t('toolbar.insert' as any) || '插入'}
+            batchSelectButtonText="批量插入画布"
           />
         </Suspense>
       )}

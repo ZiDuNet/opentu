@@ -4950,6 +4950,7 @@ export const AIInputBar: React.FC<AIInputBarProps> = React.memo(
             filterType={AssetType.IMAGE}
             onSelect={handleMediaLibrarySelect}
             onSelectMultiple={handleMediaLibrarySelectMultiple}
+            batchSelectButtonText="批量插入对话框"
           />
         )}
         </div>

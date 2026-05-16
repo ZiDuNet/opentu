@@ -30,6 +30,7 @@ export function MediaLibraryModal({
   onSelect,
   onSelectMultiple,
   selectButtonText,
+  batchSelectButtonText,
 }: MediaLibraryModalProps) {
   const {
     assets,
@@ -365,6 +366,7 @@ export function MediaLibraryModal({
               onUploadClick={handleUploadClick}
               storageStatus={storageStatus}
               onSelectMultiple={onSelectMultiple ? handleBatchUse : undefined}
+              batchSelectButtonText={batchSelectButtonText}
             />
           </div>
 
