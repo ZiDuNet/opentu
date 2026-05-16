@@ -132,43 +132,84 @@ export const MultiImageUpload: React.FC<MultiImageUploadProps> = ({
 
   // Handle media library selection
   const handleMediaLibrarySelect = useCallback(async (asset: Asset) => {
-    // Need to fetch the actual blob data from the blob URL
-    // and convert it to base64 data URL for API compatibility
     try {
-      const response = await fetch(asset.url);
-      const blob = await response.blob();
-
-      // Convert blob to base64 data URL
-      const reader = new FileReader();
-      reader.onload = () => {
-        const newImage: UploadedVideoImage = {
-          slot: currentSlot,
-          slotLabel: labels[currentSlot] || `图片${currentSlot + 1}`,
-          url: reader.result as string, // base64 data URL
-          name: asset.name,
-        };
-
-        // Update images array
-        const newImages = [...images];
-        const existingIndex = newImages.findIndex(img => img.slot === currentSlot);
-        if (existingIndex >= 0) {
-          newImages[existingIndex] = newImage;
-        } else {
-          newImages.push(newImage);
-        }
-        // Sort by slot
-        newImages.sort((a, b) => a.slot - b.slot);
-        onImagesChange(newImages);
-
-        setShowMediaLibrary(false);
-      };
-      reader.readAsDataURL(blob);
+      const newImage = await assetToUploadedImage(asset, currentSlot);
+      const updatedImages = upsertImagesBySlot(images, [newImage]);
+      onImagesChange(updatedImages);
+      setShowMediaLibrary(false);
     } catch (error) {
       console.error('[MultiImageUpload] Failed to convert asset to base64:', error);
       MessagePlugin.error('加载图片失败');
       setShowMediaLibrary(false);
     }
   }, [currentSlot, images, labels, onImagesChange]);
+
+  const assetToUploadedImage = useCallback(async (asset: Asset, slot: number): Promise<UploadedVideoImage> => {
+    const response = await fetch(asset.url);
+    const blob = await response.blob();
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+
+    return {
+      slot,
+      slotLabel: labels[slot] || `图片${slot + 1}`,
+      url: dataUrl,
+      name: asset.name,
+    };
+  }, [labels]);
+
+  const upsertImagesBySlot = useCallback((baseImages: UploadedVideoImage[], newImages: UploadedVideoImage[]) => {
+    const mergedImages = [...baseImages];
+
+    for (const newImage of newImages) {
+      const existingIndex = mergedImages.findIndex(img => img.slot === newImage.slot);
+      if (existingIndex >= 0) {
+        mergedImages[existingIndex] = newImage;
+      } else {
+        mergedImages.push(newImage);
+      }
+    }
+
+    mergedImages.sort((a, b) => a.slot - b.slot);
+    return mergedImages;
+  }, []);
+
+  const handleMediaLibrarySelectMultiple = useCallback(async (assets: Asset[]) => {
+    if (assets.length === 0) return;
+
+    try {
+      const remainingSlots = Array.from({ length: maxCount }, (_, index) => index)
+        .filter(slot => slot >= currentSlot)
+        .filter(slot => !images.some(img => img.slot === slot));
+      const targetSlots = [currentSlot, ...remainingSlots.filter(slot => slot !== currentSlot)];
+      const assignableAssets = assets.slice(0, targetSlots.length);
+
+      if (assignableAssets.length === 0) {
+        setShowMediaLibrary(false);
+        return;
+      }
+
+      const newImages = await Promise.all(
+        assignableAssets.map((asset, index) => assetToUploadedImage(asset, targetSlots[index]))
+      );
+
+      const updatedImages = upsertImagesBySlot(images, newImages);
+      onImagesChange(updatedImages);
+      setShowMediaLibrary(false);
+
+      if (assets.length > targetSlots.length) {
+        MessagePlugin.warning(`最多可批量使用 ${targetSlots.length} 张图片，已自动截取`);
+      }
+    } catch (error) {
+      console.error('[MultiImageUpload] Failed to batch convert assets:', error);
+      MessagePlugin.error('加载图片失败');
+      setShowMediaLibrary(false);
+    }
+  }, [assetToUploadedImage, currentSlot, images, maxCount, onImagesChange, upsertImagesBySlot]);
 
   // Open media library for a specific slot
   const openMediaLibrary = useCallback((slot: number) => {
@@ -290,6 +331,7 @@ export const MultiImageUpload: React.FC<MultiImageUploadProps> = ({
             mode={SelectionMode.SELECT}
             filterType={AssetType.IMAGE}
             onSelect={handleMediaLibrarySelect}
+            onSelectMultiple={handleMediaLibrarySelectMultiple}
           />
         )}
       </div>

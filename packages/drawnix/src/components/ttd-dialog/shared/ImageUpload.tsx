@@ -196,33 +196,58 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
     return imageSrcMap.get(index) || '';
   };
 
-  const handleMediaLibrarySelect = async (asset: Asset) => {
-    // Need to fetch the actual blob data from the blob URL
-    // and convert it to base64 data URL for API compatibility
-    try {
-      const response = await fetch(asset.url);
-      const blob = await response.blob();
+  const assetToImageFile = async (asset: Asset): Promise<ImageFile> => {
+    const response = await fetch(asset.url);
+    const blob = await response.blob();
 
-      // Convert blob to base64 data URL
+    const dataUrl = await new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
-      reader.onload = () => {
-        const newImage: ImageFile = {
-          url: reader.result as string, // base64 data URL
-          name: asset.name,
-        };
-
-        if (multiple) {
-          onImagesChange([...images, newImage]);
-        } else {
-          onImagesChange([newImage]);
-        }
-
-        setShowMediaLibrary(false);
-        onError?.(null);
-      };
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
       reader.readAsDataURL(blob);
+    });
+
+    return {
+      url: dataUrl,
+      name: asset.name,
+    };
+  };
+
+  const handleMediaLibrarySelect = async (asset: Asset) => {
+    try {
+      const newImage = await assetToImageFile(asset);
+
+      if (multiple) {
+        onImagesChange([...images, newImage]);
+      } else {
+        onImagesChange([newImage]);
+      }
+
+      setShowMediaLibrary(false);
+      onError?.(null);
     } catch (error) {
       console.error('[ImageUpload] Failed to convert asset to base64:', error);
+      onError?.(language === 'zh' ? '加载图片失败' : 'Failed to load image');
+      setShowMediaLibrary(false);
+    }
+  };
+
+  const handleMediaLibrarySelectMultiple = async (assets: Asset[]) => {
+    if (assets.length === 0) return;
+
+    try {
+      const newImages = await Promise.all(assets.map(assetToImageFile));
+
+      if (multiple) {
+        onImagesChange([...images, ...newImages]);
+      } else {
+        onImagesChange(newImages.slice(0, 1));
+      }
+
+      setShowMediaLibrary(false);
+      onError?.(null);
+    } catch (error) {
+      console.error('[ImageUpload] Failed to batch convert assets:', error);
       onError?.(language === 'zh' ? '加载图片失败' : 'Failed to load image');
       setShowMediaLibrary(false);
     }
@@ -402,6 +427,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
           mode={SelectionMode.SELECT}
           filterType={AssetType.IMAGE}
           onSelect={handleMediaLibrarySelect}
+          onSelectMultiple={multiple ? handleMediaLibrarySelectMultiple : undefined}
         />
       )}
     </div>

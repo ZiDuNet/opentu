@@ -72,7 +72,6 @@ export class GridImageService {
       const imageResult = await defaultGeminiClient.generateImage(prompt, {
         size: imageSize,
         quality: imageQuality,
-        response_format: 'url',
       });
       
       if (!imageResult.data || imageResult.data.length === 0) {

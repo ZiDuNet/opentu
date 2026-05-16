@@ -282,6 +282,7 @@ export const QuickCreationToolbar: React.FC<QuickCreationToolbarProps> = ({
       onOpenMediaLibrary({
         mode: SelectionMode.SELECT,
         onSelect: handleInsertAsset,
+        onSelectMultiple: handleInsertMultipleAssets,
         selectButtonText: t('toolbar.insert' as any) || '插入',
       });
       onClose();

@@ -37,6 +37,7 @@ import { registerSeedanceAdapter } from './seedance-adapter';
 import { registerGPTImageAdapter } from './gpt-image-adapter';
 import { registerTuziGPTImageAdapter } from './tuzi-gpt-image-adapter';
 import {
+  type ImageResolutionTier,
   isGPTImage2Model,
   resolveImageResolutionTier,
 } from './image-size-quality-resolver';
@@ -186,16 +187,30 @@ export const geminiImageAdapter: ImageModelAdapter = {
       | 'url'
       | 'b64_json'
       | undefined;
-
-    const result = await defaultGeminiClient.generateImage(request.prompt, {
+    const generateImageOptions: {
+      size?: string;
+      image?: string[];
+      response_format?: 'url' | 'b64_json';
+      quality?: ImageResolutionTier;
+      count?: number;
+      model: string;
+      modelRef: typeof request.modelRef;
+    } = {
       size: request.size,
       image: request.referenceImages,
-      response_format: responseFormat || 'url',
       quality,
       count:
         typeof request.params?.n === 'number' ? request.params.n : undefined,
       model,
       modelRef: request.modelRef || null,
+    };
+
+    if (responseFormat) {
+      generateImageOptions.response_format = responseFormat;
+    }
+
+    const result = await defaultGeminiClient.generateImage(request.prompt, {
+      ...generateImageOptions,
     });
 
     return extractImageUrl(result, request.prompt);

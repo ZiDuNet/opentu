@@ -2218,37 +2218,68 @@ export const AIInputBar: React.FC<AIInputBarProps> = React.memo(
       handleOpenPromptTool('inspiration_board');
     }, [handleOpenPromptTool]);
 
+    const assetToSelectedContent = useCallback(
+      (asset: Asset): Promise<SelectedContent> =>
+        new Promise((resolve) => {
+          try {
+            const img = new Image();
+            img.onload = () => {
+              resolve({
+                type: 'image',
+                url: asset.url,
+                name: asset.name || `素材-${Date.now()}`,
+                width: img.naturalWidth || undefined,
+                height: img.naturalHeight || undefined,
+              });
+            };
+            img.onerror = () => {
+              resolve({
+                type: 'image',
+                url: asset.url,
+                name: asset.name || `素材-${Date.now()}`,
+              });
+            };
+            img.src = asset.url;
+          } catch {
+            resolve({
+              type: 'image',
+              url: asset.url,
+              name: asset.name || `素材-${Date.now()}`,
+            });
+          }
+        }),
+      []
+    );
+
     // 处理素材库选择
     const handleMediaLibrarySelect = useCallback(async (asset: Asset) => {
       try {
-        // 创建 Image 对象获取尺寸
-        const img = new Image();
-        img.onload = () => {
-          const newContent: SelectedContent = {
-            type: 'image',
-            url: asset.url,
-            name: asset.name || `素材-${Date.now()}`,
-            width: img.naturalWidth || undefined,
-            height: img.naturalHeight || undefined,
-          };
-          setUploadedContent((prev) => [...prev, newContent]);
-          setShowMediaLibrary(false);
-        };
-        img.onerror = () => {
-          const newContent: SelectedContent = {
-            type: 'image',
-            url: asset.url,
-            name: asset.name || `素材-${Date.now()}`,
-          };
-          setUploadedContent((prev) => [...prev, newContent]);
-          setShowMediaLibrary(false);
-        };
-        img.src = asset.url;
+        const newContent = await assetToSelectedContent(asset);
+        setUploadedContent((prev) => [...prev, newContent]);
+        setShowMediaLibrary(false);
       } catch (error) {
         console.error('Failed to select asset from library:', error);
         setShowMediaLibrary(false);
       }
-    }, []);
+    }, [assetToSelectedContent]);
+
+    const handleMediaLibrarySelectMultiple = useCallback(
+      async (assets: Asset[]) => {
+        if (assets.length === 0) return;
+
+        try {
+          const newContents = await Promise.all(
+            assets.map(assetToSelectedContent)
+          );
+          setUploadedContent((prev) => [...prev, ...newContents]);
+          setShowMediaLibrary(false);
+        } catch (error) {
+          console.error('Failed to batch select assets from library:', error);
+          setShowMediaLibrary(false);
+        }
+      },
+      [assetToSelectedContent]
+    );
 
     const handleKnowledgeContextChange = useCallback(
       (refs: KnowledgeContextRef[]) => {
@@ -4912,14 +4943,15 @@ export const AIInputBar: React.FC<AIInputBarProps> = React.memo(
         </div>
 
           {showMediaLibrary && (
-            <MediaLibraryModal
-              isOpen={showMediaLibrary}
-              onClose={() => setShowMediaLibrary(false)}
-              mode={SelectionMode.SELECT}
-              filterType={AssetType.IMAGE}
-              onSelect={handleMediaLibrarySelect}
-            />
-          )}
+          <MediaLibraryModal
+            isOpen={showMediaLibrary}
+            onClose={() => setShowMediaLibrary(false)}
+            mode={SelectionMode.SELECT}
+            filterType={AssetType.IMAGE}
+            onSelect={handleMediaLibrarySelect}
+            onSelectMultiple={handleMediaLibrarySelectMultiple}
+          />
+        )}
         </div>
       </>
     );

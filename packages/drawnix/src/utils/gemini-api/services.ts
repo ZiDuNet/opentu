@@ -316,8 +316,11 @@ async function generateImageDirect(
     const data: any = {
       model: validatedConfig.modelName || 'gemini-3-pro-image-preview-vip',
       prompt: enhancedPrompt,
-      response_format: options.response_format || 'url', // 默认返回 url
     };
+
+    if (options.response_format) {
+      data.response_format = options.response_format;
+    }
 
     // size 参数可选，不传则由 API 自动决定（对应 auto）
     if (options.size && options.size !== 'auto') {

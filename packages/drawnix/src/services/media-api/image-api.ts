@@ -57,8 +57,11 @@ export function buildImageRequestBody(
   const body: Record<string, unknown> = {
     prompt: params.prompt,
     model: params.model,
-    response_format: 'url',
   };
+
+  if (params.response_format) {
+    body.response_format = params.response_format;
+  }
 
   if (params.n && params.n > 1) {
     body.n = params.n;

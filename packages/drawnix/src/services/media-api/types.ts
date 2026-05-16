@@ -54,6 +54,7 @@ export interface VideoApiConfig extends ApiConfig {
 export interface ImageGenerationParams {
   prompt: string;
   model?: string;
+  response_format?: 'url' | 'b64_json';
   /** 尺寸字符串，如 '1024x1024' */
   size?: string;
   /** 宽高比，如 '1:1', '16:9' */
