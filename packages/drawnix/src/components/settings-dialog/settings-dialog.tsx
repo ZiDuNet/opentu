@@ -2221,12 +2221,20 @@ export const SettingsDialog = ({
               <Switch
                 size="small"
                 value={selectedProfile.preferAsyncImageEndpoint ?? false}
-                onChange={(value) =>
+                onChange={(checked) => {
+                  const value = checked as boolean;
                   updateProfile(selectedProfile.id, (profile) => ({
                     ...profile,
                     preferAsyncImageEndpoint: value,
-                  }))
-                }
+                  }));
+                  providerProfilesSettings.update(
+                    cloneValue(providerProfilesSettings.get()).map((profile) =>
+                      profile.id === selectedProfile.id
+                        ? { ...profile, preferAsyncImageEndpoint: value }
+                        : profile
+                    )
+                  );
+                }}
               />
               <span className="settings-dialog__field-hint" style={{ width: '100%' }}>
                 开启后，支持异步接口的图片模型将优先使用 /v1/videos 异步接口生成

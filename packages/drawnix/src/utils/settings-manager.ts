@@ -760,6 +760,7 @@ class SettingsManager {
           imageApiCompatibility: this.normalizeStoredImageApiCompatibility(
             profile.imageApiCompatibility
           ),
+          preferAsyncImageEndpoint: profile.preferAsyncImageEndpoint === true,
           extraHeaders: this.normalizeStringRecord(profile.extraHeaders),
           enabled: profile.enabled !== false,
           capabilities: this.normalizeCapabilities(profile.capabilities),

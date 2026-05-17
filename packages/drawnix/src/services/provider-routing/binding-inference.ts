@@ -825,6 +825,20 @@ export function inferBindingsForProviderModel(
   model: ModelConfig,
   endpointHints?: Record<string, PricingEndpointInfo> | null
 ): ProviderModelBinding[] {
+  if (model.id === 'gpt-image-2') {
+    console.debug('[binding-inference] inferBindingsForProviderModel', {
+      modelId: model.id,
+      modelType: model.type,
+      profileId: profile.id,
+      profileName: profile.name,
+      profileType: profile.providerType,
+      preferAsync: profile.preferAsyncImageEndpoint,
+      endpointHintsKeys: endpointHints ? Object.keys(endpointHints) : null,
+      hasAsyncImageScenario: endpointHints
+        ? Object.values(endpointHints).some(ep => ep.scenario === 'async-image')
+        : false,
+    });
+  }
   let bindings: ProviderModelBinding[];
   switch (model.type) {
     case 'text':
