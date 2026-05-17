@@ -286,9 +286,7 @@ export function MediaLibraryGrid({
   onFileUpload,
   onUploadClick,
   storageStatus,
-  onSelectMultiple,
-  batchSelectButtonText = '批量插入',
-  batchSelecting = false,
+  onSelectionChange,
 }: MediaLibraryGridProps) {
   const {
     assets,
@@ -732,6 +730,10 @@ export function MediaLibraryGrid({
   }, [filteredResult.assets, isAssetSelected]);
 
   const filteredSelectedCount = filteredSelectedAssets.length;
+
+  useEffect(() => {
+    onSelectionChange?.(filteredSelectedAssets, isSelectionMode);
+  }, [filteredSelectedAssets, isSelectionMode, onSelectionChange]);
 
   // 全选逻辑
   const isAllSelected = useMemo(() => {
@@ -1421,29 +1423,8 @@ export function MediaLibraryGrid({
                 >
                   取消
                 </Button>
-                {onSelectMultiple && (
-                  <HoverTip content={batchSelectButtonText} placement="bottom">
-                    <Button
-                      variant="base"
-                      theme="primary"
-                      size="small"
-                      icon={<PlusCircle size={16} />}
-                      disabled={filteredSelectedCount === 0 || batchSelecting}
-                      loading={batchSelecting}
-                      onClick={() => {
-                        if (!batchSelecting && filteredSelectedAssets.length > 0) {
-                          void onSelectMultiple(filteredSelectedAssets);
-                        }
-                      }}
-                      data-track="grid_batch_insert"
-                    >
-                      {batchSelectButtonText} ({filteredSelectedCount})
-                    </Button>
-                  </HoverTip>
-                )}
                 <Button
-                  variant="base"
-                  theme="primary"
+                  variant="outline"
                   size="small"
                   icon={<Download size={16} />}
                   disabled={filteredSelectedCount === 0 || isDownloading}
@@ -1483,8 +1464,7 @@ export function MediaLibraryGrid({
                   批量选择
                 </Button>
                 <Button
-                  variant="base"
-                  theme="primary"
+                  variant="outline"
                   size="small"
                   icon={<ImageUploadIconComp size={16} />}
                   onClick={onUploadClick}

@@ -86,7 +86,6 @@ import {
   type ModelConfig,
 } from '../../constants/model-config';
 import { getEffectiveVideoCompatibleParams } from '../../services/video-binding-utils';
-import { BUILT_IN_TOOLS } from '../../constants/built-in-tools';
 import { initializeMCP, mcpRegistry } from '../../mcp';
 import { setCanvasBoard } from '../../services/canvas-operations/canvas-insertion';
 import { setCanvasBoard as setMcpCanvasBoard } from '../../mcp/tools/canvas-insertion';
@@ -149,7 +148,6 @@ import {
   type ImageGenerationAnchorPresentationState,
 } from '../../utils/image-generation-anchor-state';
 import { WorkZoneTransforms } from '../../plugins/with-workzone';
-import { toolWindowService } from '../../services/tool-window-service';
 import { useWorkflowSubmission } from '../../hooks/useWorkflowSubmission';
 import { isFrameElement } from '../../types/frame.types';
 import { matchFrameSizeForModel } from '../../utils/frame-size-matcher';
@@ -2253,8 +2251,12 @@ export const AIInputBar: React.FC<AIInputBarProps> = React.memo(
     );
 
     // 处理添加 Skill：打开知识库并定位到 Skill 目录，自动新建笔记
-    const handleAddSkill = useCallback(() => {
-      const tool = BUILT_IN_TOOLS.find((t) => t.id === 'knowledge-base');
+    const handleAddSkill = useCallback(async () => {
+      const [{ toolRegistry }, { toolWindowService }] = await Promise.all([
+        import('../../tools/registry'),
+        import('../../services/tool-window-service'),
+      ]);
+      const tool = toolRegistry.getManifestById('knowledge-base');
       if (!tool) return;
 
       // 先存储待处理的导航意图（防止组件还未挂载时事件丢失）
@@ -2277,9 +2279,13 @@ export const AIInputBar: React.FC<AIInputBarProps> = React.memo(
 
     // 处理打开提示词工具（香蕉提示词）- 通过 WinBox 弹窗方式打开
     const handleOpenPromptTool = useCallback(
-      (source = 'ai_input_bar') => {
+      async (source = 'ai_input_bar') => {
+        const [{ toolRegistry }, { toolWindowService }] = await Promise.all([
+          import('../../tools/registry'),
+          import('../../services/tool-window-service'),
+        ]);
         // 从内置工具列表中获取香蕉提示词工具配置
-        const tool = BUILT_IN_TOOLS.find((t) => t.id === 'banana-prompt');
+        const tool = toolRegistry.getManifestById('banana-prompt');
         if (!tool) {
           console.warn('[AIInputBar] Banana prompt tool not found');
           analytics.trackPromptAction({

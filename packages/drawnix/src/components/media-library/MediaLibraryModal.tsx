@@ -30,7 +30,6 @@ export function MediaLibraryModal({
   onSelect,
   onSelectMultiple,
   selectButtonText,
-  batchSelectButtonText,
 }: MediaLibraryModalProps) {
   const {
     assets,
@@ -54,6 +53,10 @@ export function MediaLibraryModal({
   const [showMobileInspector, setShowMobileInspector] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [isSelecting, setIsSelecting] = useState(false);
+  const [selectionModeActive, setSelectionModeActive] = useState(false);
+  const [selectedAssetsForAction, setSelectedAssetsForAction] = useState<
+    Asset[]
+  >([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isMountedRef = useRef(true);
   const isSelectingRef = useRef(false);
@@ -184,6 +187,14 @@ export function MediaLibraryModal({
       }
     },
     [onClose, onSelectMultiple],
+  );
+
+  const handleSelectionChange = useCallback(
+    (assets: Asset[], isSelectionMode: boolean) => {
+      setSelectionModeActive(isSelectionMode);
+      setSelectedAssetsForAction(assets);
+    },
+    []
   );
 
   const handleDownloadAsset = useCallback(async (asset: Asset) => {
@@ -372,9 +383,7 @@ export function MediaLibraryModal({
               onFileUpload={handleFileUpload}
               onUploadClick={handleUploadClick}
               storageStatus={storageStatus}
-              onSelectMultiple={onSelectMultiple ? handleBatchUse : undefined}
-              batchSelectButtonText={batchSelectButtonText}
-              batchSelecting={isSelecting}
+              onSelectionChange={handleSelectionChange}
             />
           </div>
 
@@ -383,11 +392,18 @@ export function MediaLibraryModal({
             <div className="media-library-layout__inspector">
               <MediaLibraryInspector
                 asset={selectedAsset}
+                selectedAssets={selectedAssetsForAction}
+                isSelectionMode={selectionModeActive}
                 onRename={renameAsset}
                 onDelete={handleRemoveAsset}
                 onDownload={handleDownloadAsset}
                 onMarkAsSubject={markAssetAsSubject}
                 onSelect={showSelectButton ? handleUseAsset : undefined}
+                onSelectMultiple={
+                  showSelectButton && onSelectMultiple
+                    ? handleBatchUse
+                    : undefined
+                }
                 showSelectButton={showSelectButton}
                 selecting={isSelecting}
                 selectButtonText={selectButtonText}
@@ -410,11 +426,16 @@ export function MediaLibraryModal({
         >
           <MediaLibraryInspector
             asset={selectedAsset}
+            selectedAssets={selectedAssetsForAction}
+            isSelectionMode={selectionModeActive}
             onRename={renameAsset}
             onDelete={handleRemoveAsset}
             onDownload={handleDownloadAsset}
             onMarkAsSubject={markAssetAsSubject}
             onSelect={showSelectButton ? handleUseAsset : undefined}
+            onSelectMultiple={
+              showSelectButton && onSelectMultiple ? handleBatchUse : undefined
+            }
             showSelectButton={showSelectButton}
             selecting={isSelecting}
             selectButtonText={selectButtonText}
