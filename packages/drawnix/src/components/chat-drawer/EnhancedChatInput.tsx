@@ -198,6 +198,26 @@ export const EnhancedChatInput = forwardRef<
       [appendUploadedContent]
     );
 
+    const handleMediaLibrarySelectMultiple = useCallback(
+      async (assets: Asset[]) => {
+        if (assets.length === 0) return;
+
+        try {
+          const newContents = assets.map((asset) => ({
+            type: 'image' as const,
+            url: asset.url,
+            name: asset.name || `素材-${Date.now()}`,
+          }));
+          appendUploadedContent(newContents);
+          setShowMediaLibrary(false);
+        } catch (error) {
+          console.error('Failed to batch select assets from library:', error);
+          setShowMediaLibrary(false);
+        }
+      },
+      [appendUploadedContent]
+    );
+
     const handleRemoveUploadedContent = useCallback((index: number) => {
       setUploadedContent((prev) => prev.filter((_, i) => i !== index));
     }, []);
@@ -514,6 +534,8 @@ export const EnhancedChatInput = forwardRef<
             mode={SelectionMode.SELECT}
             filterType={AssetType.IMAGE}
             onSelect={handleMediaLibrarySelect}
+            onSelectMultiple={handleMediaLibrarySelectMultiple}
+            batchSelectButtonText="批量插入对话框"
           />
         )}
       </div>
