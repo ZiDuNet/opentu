@@ -14,7 +14,6 @@ import {
   IMAGE_MODEL_MORE_OPTIONS,
   IMAGE_MODEL_VIP_OPTIONS,
   VIDEO_MODELS,
-  isAsyncImageModel,
   ModelVendor,
 } from '../../constants/model-config';
 import type { UploadedVideoImage } from '../../types/video.types';
@@ -125,10 +124,9 @@ const toUploadedVideoImages = (
 
 function shouldUseAsyncImageEndpoint(
   context: AdapterContext,
-  model: string
+  _model: string
 ): boolean {
   return (
-    isAsyncImageModel(model) ||
     context.binding?.protocol === 'openai.async.media' ||
     context.binding?.requestSchema === 'openai.async.image.form'
   );

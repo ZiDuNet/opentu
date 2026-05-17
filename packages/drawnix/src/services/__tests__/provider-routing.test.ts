@@ -636,6 +636,7 @@ describe('provider routing', () => {
       baseUrl: 'https://test-business.tu-zi.com/v1',
       apiKey: 'key-a',
       authType: 'bearer' as const,
+      preferAsyncImageEndpoint: true,
     };
     const model: ModelConfig = {
       id: 'gpt-image-1-vip',
@@ -687,6 +688,7 @@ describe('provider routing', () => {
       apiKey: 'key-a',
       authType: 'bearer' as const,
       imageApiCompatibility: 'openai-gpt-image' as const,
+      preferAsyncImageEndpoint: true,
     };
     const model: ModelConfig = {
       id: 'gpt-image-2',

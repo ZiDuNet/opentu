@@ -54,7 +54,6 @@ import {
   buildImageRequestBody,
   parseImageResponse,
   pollVideoStatus,
-  isAsyncImageModel,
   generateAsyncImage,
   ensureBase64ForAI,
   cacheRemoteUrl,
@@ -217,6 +216,14 @@ export class FallbackMediaExecutor implements IMediaExecutor {
       modelRef || null,
       invocationOptions
     );
+    console.debug('[FallbackMediaExecutor] generateImage routing', {
+      modelName,
+      shouldUseEditSchema,
+      preferredRequestSchema: invocationOptions.preferredRequestSchema,
+      adapterId: imageAdapter?.id,
+      adapterKind: imageAdapter?.kind,
+      hasReferenceImages: !!referenceImages?.length,
+    });
     if (imageAdapter && imageAdapter.kind === 'image') {
       return executeImageViaAdapter(
         taskId,
@@ -247,8 +254,16 @@ export class FallbackMediaExecutor implements IMediaExecutor {
       );
     }
 
-    // 异步图片模型：使用 /v1/videos 接口（与 SW 模式一致）
-    if (isAsyncImageModel(modelName)) {
+    // 异步图片模型：使用 /v1/videos 接口（仅当 binding 为 async-image 时）
+    const imagePlanForAsync = resolveInvocationPlanFromRoute(
+      'image',
+      modelRef || modelName,
+      invocationOptions
+    );
+    if (
+      imagePlanForAsync?.binding.protocol === 'openai.async.media' ||
+      imagePlanForAsync?.binding.requestSchema === 'openai.async.image.form'
+    ) {
       return this.generateAsyncImageTask(
         taskId,
         {

@@ -2214,6 +2214,25 @@ export const SettingsDialog = ({
               </span>
             </div>
 
+            <div className="settings-dialog__field settings-dialog__field--full" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              <label className="settings-dialog__label" style={{ margin: 0 }}>
+                图片优先使用异步接口（实验功能，建议不要开，还未上线）
+              </label>
+              <Switch
+                size="small"
+                value={selectedProfile.preferAsyncImageEndpoint ?? false}
+                onChange={(value) =>
+                  updateProfile(selectedProfile.id, (profile) => ({
+                    ...profile,
+                    preferAsyncImageEndpoint: value,
+                  }))
+                }
+              />
+              <span className="settings-dialog__field-hint" style={{ width: '100%' }}>
+                开启后，支持异步接口的图片模型将优先使用 /v1/videos 异步接口生成
+              </span>
+            </div>
+
             <div className="settings-dialog__field settings-dialog__field--column settings-dialog__field--full">
               <label className="settings-dialog__label settings-dialog__label--stacked">
                 图标 URL

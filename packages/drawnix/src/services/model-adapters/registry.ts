@@ -178,6 +178,15 @@ export function resolveAdapterForInvocation(
   );
 
   if (plan) {
+    console.debug('[resolveAdapterForInvocation] plan resolved', {
+      kind,
+      modelId,
+      bindingProtocol: plan.binding.protocol,
+      bindingRequestSchema: plan.binding.requestSchema,
+      bindingSubmitPath: plan.binding.submitPath,
+      bindingPriority: plan.binding.priority,
+      bindingSource: plan.binding.source,
+    });
     const adapter = resolveAdapterForBinding(plan.binding, kind);
     if (adapter) {
       return adapter;

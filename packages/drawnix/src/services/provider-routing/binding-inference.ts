@@ -479,7 +479,11 @@ function inferImageBindings(
       ? 'tuzi.image.gpt-generation-json'
       : 'openai.image.basic-json';
 
-    if (!isMidjourneyModel(model) && isAsyncImageModel(model.id)) {
+    if (
+      !isMidjourneyModel(model) &&
+      isAsyncImageModel(model.id) &&
+      profile.preferAsyncImageEndpoint
+    ) {
       bindings.push(
         buildBinding(profile, model, {
           protocol: 'openai.async.media',
@@ -494,7 +498,11 @@ function inferImageBindings(
       );
     }
 
-    if (!isAsyncImageModel(model.id) || isSeedreamModel(model)) {
+    if (
+      !isAsyncImageModel(model.id) ||
+      !profile.preferAsyncImageEndpoint ||
+      isSeedreamModel(model)
+    ) {
       bindings.push(
         buildBinding(profile, model, {
           protocol: 'openai.images.generations',
@@ -516,7 +524,7 @@ function inferImageBindings(
     }
 
     if (
-      !isAsyncImageModel(model.id) &&
+      (!isAsyncImageModel(model.id) || !profile.preferAsyncImageEndpoint) &&
       isGptImageModel(model) &&
       resolvedImageApiCompatibility === 'openai-gpt-image'
     ) {
@@ -543,7 +551,7 @@ function inferImageBindings(
     }
 
     if (
-      !isAsyncImageModel(model.id) &&
+      (!isAsyncImageModel(model.id) || !profile.preferAsyncImageEndpoint) &&
       isGptImageModel(model) &&
       resolvedImageApiCompatibility === 'tuzi-gpt-image'
     ) {
@@ -791,7 +799,7 @@ function shouldUseDiscoveredEndpointHintForModel(
   }
 
   if (hint.protocol === 'openai.async.media') {
-    return model.type === 'image';
+    return model.type === 'image' && !!profile.preferAsyncImageEndpoint;
   }
 
   if (hint.protocol === 'openai.async.video') {
