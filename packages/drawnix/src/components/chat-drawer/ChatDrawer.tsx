@@ -45,6 +45,10 @@ import type { Message } from '../../types/chat-ui.types';
 import { useTextSelection } from '../../hooks/useTextSelection';
 import { applyTaskUpdateToWorkflowMessage } from '../../utils/workflow-task-sync';
 import { resolveWorkflowSessionTarget } from '../../utils/chat-drawer-session-target';
+import {
+  getLatestWorkflowImageReferences,
+  shouldUseImplicitWorkflowReferences,
+} from './workflow-media-results';
 
 import { analytics } from '../../utils/posthog-analytics';
 import { HoverTip } from '../shared';
@@ -170,6 +174,10 @@ export const ChatDrawer = forwardRef<ChatDrawerRef, ChatDrawerProps>(
     const [retryingWorkflowId, setRetryingWorkflowId] = useState<string | null>(
       null
     );
+    const [replyTarget, setReplyTarget] = useState<{
+      messageId: string;
+      workflow: WorkflowMessageData;
+    } | null>(null);
 
     // 获取重试执行器和选中内容（从 Context），以及状态同步方法
     const {
@@ -1102,6 +1110,80 @@ export const ChatDrawer = forwardRef<ChatDrawerRef, ChatDrawerProps>(
       [activeSessionId, chatHandler, onOpenChange]
     );
 
+    const [shouldRenderChat, setShouldRenderChat] = useState(false);
+
+    useEffect(() => {
+      if (isOpen) {
+        setShouldRenderChat(true);
+      }
+    }, [isOpen]);
+
+    const implicitReferenceContent = useMemo(() => {
+      if (replyTarget) {
+        return getLatestWorkflowImageReferences([replyTarget.workflow]);
+      }
+
+      if (!shouldRenderChat) {
+        return [];
+      }
+
+      return getLatestWorkflowImageReferences(workflowMessages.values());
+    }, [replyTarget, shouldRenderChat, workflowMessages]);
+
+    const implicitReferenceLabel = replyTarget
+      ? `回复：${replyTarget.workflow.name || '生成结果'}`
+      : undefined;
+
+    const handleWorkflowReply = useCallback(
+      (messageId: string, workflow: WorkflowMessageData) => {
+        setReplyTarget({ messageId, workflow });
+      },
+      []
+    );
+
+    const handleClearReplyTarget = useCallback(() => {
+      setReplyTarget(null);
+    }, []);
+
+    const handleSubmitDrawerGeneration = useCallback(
+      async (message: Message) => {
+        const textPart = message.parts.find((part) => part.type === 'text');
+        const prompt =
+          textPart && 'text' in textPart && typeof textPart.text === 'string'
+            ? textPart.text
+            : '';
+        const hasFilePart = message.parts.some(
+          (part) => part.type === 'data-file' || part.type === 'image_url'
+        );
+
+        if (
+          !hasFilePart &&
+          implicitReferenceContent.length > 0 &&
+          (replyTarget || shouldUseImplicitWorkflowReferences(prompt))
+        ) {
+          const referenceParts: Message['parts'] = implicitReferenceContent
+            .filter((item) => item.url)
+            .map((item, index) => ({
+              type: 'data-file' as const,
+              data: {
+                filename: `previous-result-${index + 1}.png`,
+                mediaType: 'image/png',
+                url: item.url,
+              },
+            }));
+
+          await handleSendWrapper({
+            ...message,
+            parts: [...message.parts, ...referenceParts],
+          });
+          return;
+        }
+
+        await handleSendWrapper(message);
+      },
+      [handleSendWrapper, implicitReferenceContent, replyTarget]
+    );
+
     // 更新当前工作流消息（同时持久化到本地存储）
     const handleUpdateWorkflowMessage = useCallback(
       async (workflow: WorkflowMessageData) => {
@@ -1440,12 +1522,6 @@ export const ChatDrawer = forwardRef<ChatDrawerRef, ChatDrawerProps>(
       stopPropagation: true,
     });
 
-    const [shouldRenderChat, setShouldRenderChat] = useState(false);
-    useEffect(() => {
-      if (isOpen) {
-        setShouldRenderChat(true);
-      }
-    }, [isOpen]);
     return (
       <>
         <ChatDrawerTrigger
@@ -1566,6 +1642,7 @@ export const ChatDrawer = forwardRef<ChatDrawerRef, ChatDrawerProps>(
                     handler={wrappedHandler}
                     workflowMessages={workflowMessages}
                     retryingWorkflowId={retryingWorkflowId}
+                    handleWorkflowReply={handleWorkflowReply}
                     handleWorkflowRetry={handleWorkflowRetry}
                   />
                 </Suspense>
@@ -1573,7 +1650,16 @@ export const ChatDrawer = forwardRef<ChatDrawerRef, ChatDrawerProps>(
 
               <EnhancedChatInput
                 selectedContent={selectedContent}
-                onSend={handleSendWrapper}
+                implicitReferenceContent={implicitReferenceContent}
+                implicitReferenceLabel={implicitReferenceLabel}
+                implicitReferencePinned={Boolean(replyTarget)}
+                onClearImplicitReference={
+                  replyTarget ? handleClearReplyTarget : undefined
+                }
+                onImplicitReferenceConsumed={
+                  replyTarget ? handleClearReplyTarget : undefined
+                }
+                onSend={handleSubmitDrawerGeneration}
                 placeholder="继续描述要修改的内容..."
               />
             </div>

@@ -12,6 +12,10 @@ interface ChatMessagesAreaProps {
   handler: ChatHandler;
   workflowMessages: Map<string, WorkflowMessageData>;
   retryingWorkflowId: string | null;
+  handleWorkflowReply?: (
+    messageId: string,
+    workflow: WorkflowMessageData
+  ) => void;
   handleWorkflowRetry: (
     messageId: string,
     workflow: WorkflowMessageData,
@@ -24,6 +28,7 @@ export const ChatMessagesArea: React.FC<ChatMessagesAreaProps> = ({
   handler,
   workflowMessages,
   retryingWorkflowId,
+  handleWorkflowReply,
   handleWorkflowRetry,
   className = 'chat-section',
 }) => {
@@ -83,6 +88,11 @@ export const ChatMessagesArea: React.FC<ChatMessagesAreaProps> = ({
                     workflow={workflowData}
                     onRetry={(stepIndex) =>
                       handleWorkflowRetry(workflowMsgId, workflowData, stepIndex)
+                    }
+                    onReply={
+                      handleWorkflowReply
+                        ? () => handleWorkflowReply(workflowMsgId, workflowData)
+                        : undefined
                     }
                     isRetrying={retryingWorkflowId === workflowMsgId}
                   />
