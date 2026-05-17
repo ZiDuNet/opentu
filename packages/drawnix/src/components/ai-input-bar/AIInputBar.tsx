@@ -130,6 +130,7 @@ import {
 } from '../../utils/posthog-analytics';
 import classNames from 'classnames';
 import { InspirationBoard } from '../inspiration-board';
+import { AIInputComposerShell } from './AIInputComposerShell';
 import { GenerationTypeDropdown } from './GenerationTypeDropdown';
 import { CountDropdown } from './CountDropdown';
 import './ai-input-bar.scss';
@@ -1106,7 +1107,8 @@ export const AIInputBar: React.FC<AIInputBarProps> = React.memo(
     const [isFocused, setIsFocused] = useState(false);
     const [isPromptManuallyExpanded, setIsPromptManuallyExpanded] =
       useState(false);
-    const [canPromptManuallyExpand, setCanPromptManuallyExpand] = useState(false);
+    const [canPromptManuallyExpand, setCanPromptManuallyExpand] =
+      useState(false);
     const [isCanvasEmpty, setIsCanvasEmpty] = useState<boolean | null>(null); // null=加载中, true=空, false=有内容
     // 当前选中的生成类型（图片、视频、Agent）
     const [generationType, setGenerationType] = useState<GenerationType>(
@@ -2035,7 +2037,8 @@ export const AIInputBar: React.FC<AIInputBarProps> = React.memo(
         }
 
         return confirm({
-          title: language === 'zh' ? '覆盖当前输入？' : 'Overwrite current input?',
+          title:
+            language === 'zh' ? '覆盖当前输入？' : 'Overwrite current input?',
           description:
             language === 'zh'
               ? '底部输入框已有提示词或参考图，继续会覆盖当前输入。'
@@ -2175,7 +2178,10 @@ export const AIInputBar: React.FC<AIInputBarProps> = React.memo(
 
       window.addEventListener(AI_INPUT_PREFILL_EVENT, handleAIInputPrefill);
       return () => {
-        window.removeEventListener(AI_INPUT_PREFILL_EVENT, handleAIInputPrefill);
+        window.removeEventListener(
+          AI_INPUT_PREFILL_EVENT,
+          handleAIInputPrefill
+        );
       };
     }, [
       audioModels,
@@ -2360,16 +2366,19 @@ export const AIInputBar: React.FC<AIInputBarProps> = React.memo(
     );
 
     // 处理素材库选择
-    const handleMediaLibrarySelect = useCallback(async (asset: Asset) => {
-      try {
-        const newContent = await assetToSelectedContent(asset);
-        setUploadedContent((prev) => [...prev, newContent]);
-        setShowMediaLibrary(false);
-      } catch (error) {
-        console.error('Failed to select asset from library:', error);
-        setShowMediaLibrary(false);
-      }
-    }, [assetToSelectedContent]);
+    const handleMediaLibrarySelect = useCallback(
+      async (asset: Asset) => {
+        try {
+          const newContent = await assetToSelectedContent(asset);
+          setUploadedContent((prev) => [...prev, newContent]);
+          setShowMediaLibrary(false);
+        } catch (error) {
+          console.error('Failed to select asset from library:', error);
+          setShowMediaLibrary(false);
+        }
+      },
+      [assetToSelectedContent]
+    );
 
     const handleMediaLibrarySelectMultiple = useCallback(
       async (assets: Asset[]) => {
@@ -4752,7 +4761,10 @@ export const AIInputBar: React.FC<AIInputBarProps> = React.memo(
       setCanPromptManuallyExpand(shouldShowExpandButton);
       if (!shouldShowExpandButton && isPromptManuallyExpanded) {
         setIsPromptManuallyExpanded(false);
-        resizeAIInputTextarea(textarea, shouldKeepExpanded ? 'expanded' : 'collapsed');
+        resizeAIInputTextarea(
+          textarea,
+          shouldKeepExpanded ? 'expanded' : 'collapsed'
+        );
         return;
       }
 
@@ -4774,254 +4786,250 @@ export const AIInputBar: React.FC<AIInputBarProps> = React.memo(
           )}
           data-testid="ai-input-bar"
         >
-        <SelectionWatcher
-          language={language}
-          onSelectionChange={handleSelectionChange}
-          externalBoardRef={SelectionWatcherBoardRef}
-          onCanvasEmptyChange={setIsCanvasEmpty}
-          isDataReady={isDataReady}
-          onFrameSelected={handleFrameSelected}
-        />
+          <SelectionWatcher
+            language={language}
+            onSelectionChange={handleSelectionChange}
+            externalBoardRef={SelectionWatcherBoardRef}
+            onCanvasEmptyChange={setIsCanvasEmpty}
+            isDataReady={isDataReady}
+            onFrameSelected={handleFrameSelected}
+          />
 
-        <InspirationBoard
-          isCanvasEmpty={showInspirationBoard}
-          onSelectPrompt={handleSelectInspirationPrompt}
-          onOpenPromptTool={handleOpenPromptToolFromInspiration}
-        />
+          <InspirationBoard
+            isCanvasEmpty={showInspirationBoard}
+            onSelectPrompt={handleSelectInspirationPrompt}
+            onOpenPromptTool={handleOpenPromptToolFromInspiration}
+          />
 
-        <div
-          className={classNames('ai-input-bar__container', {
-            'ai-input-bar__container--expanded': shouldKeepExpanded,
-          })}
-        >
-          <div className="ai-input-bar__bottom-bar">
-            <div className="ai-input-bar__bottom-start">
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={handleFileChange}
-                style={{ display: 'none' }}
-              />
+          <AIInputComposerShell
+            variant="canvas"
+            expanded={shouldKeepExpanded}
+            longText={isPromptManuallyExpanded}
+            disabled={isSubmitting}
+            leftTools={
+              <>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleFileChange}
+                  style={{ display: 'none' }}
+                />
 
-              <HoverTip
-                content={language === 'zh' ? '上传图片' : 'Upload images'}
-                showArrow={false}
-              >
-                <button
-                  className="ai-input-bar__upload-btn"
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                  }}
-                  onClick={handleUploadClick}
-                  data-track="ai_input_click_upload"
+                <HoverTip
+                  content={language === 'zh' ? '上传图片' : 'Upload images'}
+                  showArrow={false}
                 >
-                  <ImageUploadIcon size={18} />
-                </button>
-              </HoverTip>
+                  <button
+                    className="ai-input-bar__upload-btn"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
+                    onClick={handleUploadClick}
+                    data-track="ai_input_click_upload"
+                  >
+                    <ImageUploadIcon size={18} />
+                  </button>
+                </HoverTip>
 
-              <HoverTip
-                content={
-                  language === 'zh' ? '从素材库选择' : 'Select from library'
-                }
-                showArrow={false}
-              >
-                <button
-                  className="ai-input-bar__library-btn"
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                  }}
-                  onClick={() => setShowMediaLibrary(true)}
-                  data-track="ai_input_click_library"
+                <HoverTip
+                  content={
+                    language === 'zh' ? '从素材库选择' : 'Select from library'
+                  }
+                  showArrow={false}
                 >
-                  <MediaLibraryIcon size={18} />
-                </button>
-              </HoverTip>
+                  <button
+                    className="ai-input-bar__library-btn"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
+                    onClick={() => setShowMediaLibrary(true)}
+                    data-track="ai_input_click_library"
+                  >
+                    <MediaLibraryIcon size={18} />
+                  </button>
+                </HoverTip>
 
-              <KnowledgeNoteContextSelector
-                value={knowledgeContextRefs}
-                onChange={handleKnowledgeContextChange}
-                disabled={isSubmitting}
-                language={language}
-                variant="compact"
-                className="ai-input-bar__knowledge-selector"
-              />
-            </div>
-
-            <div className="ai-input-bar__bottom-controls">
-              <GenerationTypeDropdown
-                value={generationType}
-                onSelect={setGenerationType}
-                disabled={isSubmitting}
-              />
-
-              {/* Skill 下拉框：仅在 Agent 模式下显示 */}
-              {generationType === 'agent' && (
-                <SkillDropdown
-                  value={selectedSkillId}
-                  onSelect={setSelectedSkillId}
-                  onSelectSkill={handleSkillOptionSelect}
-                  onAddSkill={handleAddSkill}
+                <KnowledgeNoteContextSelector
+                  value={knowledgeContextRefs}
+                  onChange={handleKnowledgeContextChange}
+                  disabled={isSubmitting}
+                  language={language}
+                  variant="compact"
+                  className="ai-input-bar__knowledge-selector"
+                />
+              </>
+            }
+            controls={
+              <>
+                <GenerationTypeDropdown
+                  value={generationType}
+                  onSelect={setGenerationType}
                   disabled={isSubmitting}
                 />
-              )}
 
-              <ModelDropdown
-                selectedModel={selectedModel}
-                selectedSelectionKey={getSelectionKey(
-                  selectedModel,
-                  selectedModelRef
-                )}
-                onSelect={handleModelSelect}
-                onSelectModel={handleModelConfigSelect}
-                language={language}
-                models={currentModels}
-                header={
-                  language === 'zh'
-                    ? generationType === 'agent'
-                      ? '选择文本模型 (↑↓ Tab)'
-                      : '选择模型 (↑↓ Tab)'
-                    : generationType === 'agent'
-                    ? 'Select text model (↑↓ Tab)'
-                    : 'Select model (↑↓ Tab)'
-                }
-                isOpen={modelDropdownOpen}
-                onOpenChange={handleModelDropdownChange}
-              />
-
-              {generationType === 'agent' &&
-                selectedSkillId !== SKILL_AUTO_ID &&
-                selectedSkillMediaTypes.includes('image') && (
-                  <ModelDropdown
-                    selectedModel={selectedAgentImageModel}
-                    selectedSelectionKey={getSelectionKey(
-                      selectedAgentImageModel,
-                      selectedAgentImageModelRef
-                    )}
-                    onSelect={(modelId, modelRef) =>
-                      handleAgentMediaModelSelect('image', modelId, modelRef)
-                    }
-                    onSelectModel={(model) =>
-                      handleAgentMediaModelConfigSelect('image', model)
-                    }
-                    language={language}
-                    models={visibleAgentImageModels}
-                    header={
-                      language === 'zh'
-                        ? '选择图片模型 (↑↓ Tab)'
-                        : 'Select image model (↑↓ Tab)'
-                    }
-                  />
-                )}
-
-              {generationType === 'agent' &&
-                selectedSkillId !== SKILL_AUTO_ID &&
-                selectedSkillMediaTypes.includes('video') && (
-                  <ModelDropdown
-                    selectedModel={selectedAgentVideoModel}
-                    selectedSelectionKey={getSelectionKey(
-                      selectedAgentVideoModel,
-                      selectedAgentVideoModelRef
-                    )}
-                    onSelect={(modelId, modelRef) =>
-                      handleAgentMediaModelSelect('video', modelId, modelRef)
-                    }
-                    onSelectModel={(model) =>
-                      handleAgentMediaModelConfigSelect('video', model)
-                    }
-                    language={language}
-                    models={visibleAgentVideoModels}
-                    header={
-                      language === 'zh'
-                        ? '选择视频模型 (↑↓ Tab)'
-                        : 'Select video model (↑↓ Tab)'
-                    }
-                  />
-                )}
-
-              {generationType === 'agent' &&
-                selectedSkillId !== SKILL_AUTO_ID &&
-                selectedSkillMediaTypes.includes('audio') && (
-                  <ModelDropdown
-                    selectedModel={selectedAgentAudioModel}
-                    selectedSelectionKey={getSelectionKey(
-                      selectedAgentAudioModel,
-                      selectedAgentAudioModelRef
-                    )}
-                    onSelect={(modelId, modelRef) =>
-                      handleAgentMediaModelSelect('audio', modelId, modelRef)
-                    }
-                    onSelectModel={(model) =>
-                      handleAgentMediaModelConfigSelect('audio', model)
-                    }
-                    language={language}
-                    models={visibleAgentAudioModels}
-                    header={
-                      language === 'zh'
-                        ? '选择音频模型 (↑↓ Tab)'
-                        : 'Select audio model (↑↓ Tab)'
-                    }
-                  />
-                )}
-
-              {/* Parameters dropdown selector - Hidden for Agent mode */}
-              {generationType !== 'agent' && compatibleParams.length > 0 && (
-                <ParametersDropdown
-                  key={selectedModel} // 强制在模型切换时重新挂载以刷新可配置参数
-                  selectedParams={selectedParams}
-                  onParamChange={handleParamSelect}
-                  compatibleParams={compatibleParams}
-                  modelId={selectedModel}
-                  language={language}
-                  isOpen={paramsDropdownOpen}
-                  onOpenChange={handleParamsDropdownChange}
-                />
-              )}
-
-              {generationType !== 'agent' &&
-                generationType !== 'text' &&
-                generationType !== 'audio' && (
-                  <CountDropdown
-                    value={selectedCount}
-                    onSelect={handleCountSelect}
+                {/* Skill 下拉框：仅在 Agent 模式下显示 */}
+                {generationType === 'agent' && (
+                  <SkillDropdown
+                    value={selectedSkillId}
+                    onSelect={setSelectedSkillId}
+                    onSelectSkill={handleSkillOptionSelect}
+                    onAddSkill={handleAddSkill}
                     disabled={isSubmitting}
-                    isOpen={countDropdownOpen}
-                    onOpenChange={handleCountDropdownChange}
                   />
                 )}
-            </div>
 
-            <button
-              className={classNames('ai-input-bar__send-btn', {
-                active: canGenerate,
-                loading: isSubmitting,
-                'ai-input-bar__send-btn--guide': shouldHighlightInspirationSend,
-              })}
-              onMouseDown={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-              }}
-              onClick={() => handleGenerate('button')}
-              disabled={!canGenerate || isSubmitting}
-              data-track="ai_input_click_send"
-              data-track-params={sendButtonTrackParams}
-              data-testid="ai-send-btn"
-            >
-              <Send size={18} />
-            </button>
-          </div>
+                <ModelDropdown
+                  selectedModel={selectedModel}
+                  selectedSelectionKey={getSelectionKey(
+                    selectedModel,
+                    selectedModelRef
+                  )}
+                  onSelect={handleModelSelect}
+                  onSelectModel={handleModelConfigSelect}
+                  language={language}
+                  models={currentModels}
+                  header={
+                    language === 'zh'
+                      ? generationType === 'agent'
+                        ? '选择文本模型 (↑↓ Tab)'
+                        : '选择模型 (↑↓ Tab)'
+                      : generationType === 'agent'
+                      ? 'Select text model (↑↓ Tab)'
+                      : 'Select model (↑↓ Tab)'
+                  }
+                  isOpen={modelDropdownOpen}
+                  onOpenChange={handleModelDropdownChange}
+                />
 
-          <div
-            className={classNames('ai-input-bar__input-area', {
-              'ai-input-bar__input-area--expanded': shouldKeepExpanded,
-              'ai-input-bar__input-area--long-text': isPromptManuallyExpanded,
-            })}
-          >
-            {allContent.length > 0 && (
-              <div className="ai-input-bar__content-preview">
+                {generationType === 'agent' &&
+                  selectedSkillId !== SKILL_AUTO_ID &&
+                  selectedSkillMediaTypes.includes('image') && (
+                    <ModelDropdown
+                      selectedModel={selectedAgentImageModel}
+                      selectedSelectionKey={getSelectionKey(
+                        selectedAgentImageModel,
+                        selectedAgentImageModelRef
+                      )}
+                      onSelect={(modelId, modelRef) =>
+                        handleAgentMediaModelSelect('image', modelId, modelRef)
+                      }
+                      onSelectModel={(model) =>
+                        handleAgentMediaModelConfigSelect('image', model)
+                      }
+                      language={language}
+                      models={visibleAgentImageModels}
+                      header={
+                        language === 'zh'
+                          ? '选择图片模型 (↑↓ Tab)'
+                          : 'Select image model (↑↓ Tab)'
+                      }
+                    />
+                  )}
+
+                {generationType === 'agent' &&
+                  selectedSkillId !== SKILL_AUTO_ID &&
+                  selectedSkillMediaTypes.includes('video') && (
+                    <ModelDropdown
+                      selectedModel={selectedAgentVideoModel}
+                      selectedSelectionKey={getSelectionKey(
+                        selectedAgentVideoModel,
+                        selectedAgentVideoModelRef
+                      )}
+                      onSelect={(modelId, modelRef) =>
+                        handleAgentMediaModelSelect('video', modelId, modelRef)
+                      }
+                      onSelectModel={(model) =>
+                        handleAgentMediaModelConfigSelect('video', model)
+                      }
+                      language={language}
+                      models={visibleAgentVideoModels}
+                      header={
+                        language === 'zh'
+                          ? '选择视频模型 (↑↓ Tab)'
+                          : 'Select video model (↑↓ Tab)'
+                      }
+                    />
+                  )}
+
+                {generationType === 'agent' &&
+                  selectedSkillId !== SKILL_AUTO_ID &&
+                  selectedSkillMediaTypes.includes('audio') && (
+                    <ModelDropdown
+                      selectedModel={selectedAgentAudioModel}
+                      selectedSelectionKey={getSelectionKey(
+                        selectedAgentAudioModel,
+                        selectedAgentAudioModelRef
+                      )}
+                      onSelect={(modelId, modelRef) =>
+                        handleAgentMediaModelSelect('audio', modelId, modelRef)
+                      }
+                      onSelectModel={(model) =>
+                        handleAgentMediaModelConfigSelect('audio', model)
+                      }
+                      language={language}
+                      models={visibleAgentAudioModels}
+                      header={
+                        language === 'zh'
+                          ? '选择音频模型 (↑↓ Tab)'
+                          : 'Select audio model (↑↓ Tab)'
+                      }
+                    />
+                  )}
+
+                {/* Parameters dropdown selector - Hidden for Agent mode */}
+                {generationType !== 'agent' && compatibleParams.length > 0 && (
+                  <ParametersDropdown
+                    key={selectedModel} // 强制在模型切换时重新挂载以刷新可配置参数
+                    selectedParams={selectedParams}
+                    onParamChange={handleParamSelect}
+                    compatibleParams={compatibleParams}
+                    modelId={selectedModel}
+                    language={language}
+                    isOpen={paramsDropdownOpen}
+                    onOpenChange={handleParamsDropdownChange}
+                  />
+                )}
+
+                {generationType !== 'agent' &&
+                  generationType !== 'text' &&
+                  generationType !== 'audio' && (
+                    <CountDropdown
+                      value={selectedCount}
+                      onSelect={handleCountSelect}
+                      disabled={isSubmitting}
+                      isOpen={countDropdownOpen}
+                      onOpenChange={handleCountDropdownChange}
+                    />
+                  )}
+              </>
+            }
+            sendButton={
+              <button
+                className={classNames('ai-input-bar__send-btn', {
+                  active: canGenerate,
+                  loading: isSubmitting,
+                  'ai-input-bar__send-btn--guide':
+                    shouldHighlightInspirationSend,
+                })}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
+                onClick={() => handleGenerate('button')}
+                disabled={!canGenerate || isSubmitting}
+                data-track="ai_input_click_send"
+                data-track-params={sendButtonTrackParams}
+                data-testid="ai-send-btn"
+              >
+                <Send size={18} />
+              </button>
+            }
+            preview={
+              allContent.length > 0 ? (
                 <SelectedContentPreview
                   items={allContent}
                   language={language}
@@ -5029,129 +5037,133 @@ export const AIInputBar: React.FC<AIInputBarProps> = React.memo(
                   onRemove={handleRemoveUploadedContent}
                   removableStartIndex={uploadedContent.length}
                 />
-              </div>
-            )}
-
-            <div className="ai-input-bar__prompt-row">
-              <div className="ai-input-bar__rich-input">
-                {canPromptManuallyExpand ? (
-                  <HoverTip content={promptExpandLabel} showArrow={false}>
-                    <button
-                      type="button"
-                      className={classNames('ai-input-bar__prompt-expand-btn', {
-                        'ai-input-bar__prompt-expand-btn--active':
-                          isPromptManuallyExpanded,
-                      })}
-                      aria-label={promptExpandLabel}
-                      onMouseDown={(event) => {
-                        event.preventDefault();
-                        event.stopPropagation();
-                      }}
-                      onClick={handleTogglePromptExpanded}
-                      disabled={isSubmitting}
-                    >
-                      {isPromptManuallyExpanded ? (
-                        <Minimize2 size={13} aria-hidden="true" />
-                      ) : (
-                        <Maximize2 size={13} aria-hidden="true" />
-                      )}
-                    </button>
-                  </HoverTip>
-                ) : null}
-                <textarea
-                  ref={inputRef}
-                  className={classNames('ai-input-bar__input', {
-                    'ai-input-bar__input--focused': shouldKeepExpanded,
-                    'ai-input-bar__input--long-text': isPromptManuallyExpanded,
-                  })}
-                  value={prompt}
-                  onChange={handleInputChange}
-                  onKeyDown={handleKeyDown}
-                  onFocus={handleFocus}
-                  onBlur={handleBlur}
-                  placeholder={
-                    generationType === 'agent'
-                      ? language === 'zh'
-                        ? '输入指令，让 Agent 为你工作...'
-                        : 'Type instructions for Agent...'
-                      : generationType === 'text'
-                      ? language === 'zh'
-                        ? '输入你想生成的文本内容、文章、摘要或 Markdown'
-                        : 'Describe the text, article, summary, or markdown you want'
-                      : generationType === 'audio'
-                      ? hasSelectedTextContent
+              ) : null
+            }
+            textarea={
+              <>
+                <div className="ai-input-bar__rich-input">
+                  {canPromptManuallyExpand ? (
+                    <HoverTip content={promptExpandLabel} showArrow={false}>
+                      <button
+                        type="button"
+                        className={classNames(
+                          'ai-input-bar__prompt-expand-btn',
+                          {
+                            'ai-input-bar__prompt-expand-btn--active':
+                              isPromptManuallyExpanded,
+                          }
+                        )}
+                        aria-label={promptExpandLabel}
+                        onMouseDown={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                        }}
+                        onClick={handleTogglePromptExpanded}
+                        disabled={isSubmitting}
+                      >
+                        {isPromptManuallyExpanded ? (
+                          <Minimize2 size={13} aria-hidden="true" />
+                        ) : (
+                          <Maximize2 size={13} aria-hidden="true" />
+                        )}
+                      </button>
+                    </HoverTip>
+                  ) : null}
+                  <textarea
+                    ref={inputRef}
+                    className={classNames('ai-input-bar__input', {
+                      'ai-input-bar__input--focused': shouldKeepExpanded,
+                      'ai-input-bar__input--long-text':
+                        isPromptManuallyExpanded,
+                    })}
+                    value={prompt}
+                    onChange={handleInputChange}
+                    onKeyDown={handleKeyDown}
+                    onFocus={handleFocus}
+                    onBlur={handleBlur}
+                    placeholder={
+                      generationType === 'agent'
                         ? language === 'zh'
-                          ? '已有文本，无需额外提示词，直接发送'
-                          : 'Text already selected. No extra prompt needed, just send'
+                          ? '输入指令，让 Agent 为你工作...'
+                          : 'Type instructions for Agent...'
+                        : generationType === 'text'
+                        ? language === 'zh'
+                          ? '输入你想生成的文本内容、文章、摘要或 Markdown'
+                          : 'Describe the text, article, summary, or markdown you want'
+                        : generationType === 'audio'
+                        ? hasSelectedTextContent
+                          ? language === 'zh'
+                            ? '已有文本，无需额外提示词，直接发送'
+                            : 'Text already selected. No extra prompt needed, just send'
+                          : language === 'zh'
+                          ? '描述你想要生成的音乐、风格、歌词或情绪'
+                          : 'Describe the music, style, lyrics, or mood you want'
                         : language === 'zh'
-                        ? '描述你想要生成的音乐、风格、歌词或情绪'
-                        : 'Describe the music, style, lyrics, or mood you want'
-                      : language === 'zh'
-                      ? `描述你想要创建的${
-                          generationType === 'image' ? '图片' : '视频'
-                        }`
-                      : `Describe the ${
-                          generationType === 'image' ? 'image' : 'video'
-                        } you want to create`
-                  }
-                  rows={
-                    isPromptManuallyExpanded
-                      ? AI_INPUT_LONG_TEXT_ROWS
-                      : shouldKeepExpanded
-                      ? AI_INPUT_EXPANDED_ROWS
-                      : AI_INPUT_COLLAPSED_ROWS
-                  }
-                  disabled={isSubmitting}
-                  data-testid="ai-input-textarea"
-                />
-              </div>
+                        ? `描述你想要创建的${
+                            generationType === 'image' ? '图片' : '视频'
+                          }`
+                        : `Describe the ${
+                            generationType === 'image' ? 'image' : 'video'
+                          } you want to create`
+                    }
+                    rows={
+                      isPromptManuallyExpanded
+                        ? AI_INPUT_LONG_TEXT_ROWS
+                        : shouldKeepExpanded
+                        ? AI_INPUT_EXPANDED_ROWS
+                        : AI_INPUT_COLLAPSED_ROWS
+                    }
+                    disabled={isSubmitting}
+                    data-testid="ai-input-textarea"
+                  />
+                </div>
 
-              <PromptHistoryPopover
-                generationType={generationType}
-                onSelectPrompt={handleSelectHistoryPrompt}
-                language={language}
-                onBeforeOpenMyPrompts={onEnableToolWindows}
-                extraActions={
-                  shouldKeepExpanded ? (
-                    <PromptOptimizeButton
-                      className="prompt-history-popover__action-btn"
-                      originalPrompt={prompt}
-                      language={language}
-                      scenarioId={`ai-input.${generationType}` as const}
-                      disabled={isSubmitting}
-                      allowStructuredMode={true}
-                      onOpenChange={setIsPromptOptimizeOpen}
-                      onMouseDown={(event) => {
-                        event.preventDefault();
-                        event.stopPropagation();
-                        setIsFocused(true);
-                      }}
-                      onApply={(optimizedPrompt) => {
-                        setPrompt(optimizedPrompt);
-                        setIsFocused(true);
-                        requestAnimationFrame(() => {
-                          inputRef.current?.focus();
-                        });
-                      }}
-                    />
-                  ) : null
-                }
-              />
-            </div>
-          </div>
-        </div>
+                <PromptHistoryPopover
+                  generationType={generationType}
+                  onSelectPrompt={handleSelectHistoryPrompt}
+                  language={language}
+                  onBeforeOpenMyPrompts={onEnableToolWindows}
+                  extraActions={
+                    shouldKeepExpanded ? (
+                      <PromptOptimizeButton
+                        className="prompt-history-popover__action-btn"
+                        originalPrompt={prompt}
+                        language={language}
+                        scenarioId={`ai-input.${generationType}` as const}
+                        disabled={isSubmitting}
+                        allowStructuredMode={true}
+                        onOpenChange={setIsPromptOptimizeOpen}
+                        onMouseDown={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          setIsFocused(true);
+                        }}
+                        onApply={(optimizedPrompt) => {
+                          setPrompt(optimizedPrompt);
+                          setIsFocused(true);
+                          requestAnimationFrame(() => {
+                            inputRef.current?.focus();
+                          });
+                        }}
+                      />
+                    ) : null
+                  }
+                />
+              </>
+            }
+          />
 
           {showMediaLibrary && (
-          <MediaLibraryModal
-            isOpen={showMediaLibrary}
-            onClose={() => setShowMediaLibrary(false)}
-            mode={SelectionMode.SELECT}
-            filterType={AssetType.IMAGE}
-            onSelect={handleMediaLibrarySelect}
-            onSelectMultiple={handleMediaLibrarySelectMultiple}
-            batchSelectButtonText="批量插入对话框"
-          />
-        )}
+            <MediaLibraryModal
+              isOpen={showMediaLibrary}
+              onClose={() => setShowMediaLibrary(false)}
+              mode={SelectionMode.SELECT}
+              filterType={AssetType.IMAGE}
+              onSelect={handleMediaLibrarySelect}
+              onSelectMultiple={handleMediaLibrarySelectMultiple}
+              batchSelectButtonText="批量插入对话框"
+            />
+          )}
         </div>
       </>
     );

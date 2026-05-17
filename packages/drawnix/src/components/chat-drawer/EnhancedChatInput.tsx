@@ -34,6 +34,7 @@ import { GenerationTypeDropdown } from '../ai-input-bar/GenerationTypeDropdown';
 import { ModelDropdown } from '../ai-input-bar/ModelDropdown';
 import { ParametersDropdown } from '../ai-input-bar/ParametersDropdown';
 import { CountDropdown } from '../ai-input-bar/CountDropdown';
+import { AIInputComposerShell } from '../ai-input-bar/AIInputComposerShell';
 import { MediaLibraryModal } from '../media-library/MediaLibraryModal';
 import { ImageUploadIcon, MediaLibraryIcon } from '../icons';
 import { HoverTip } from '../shared';
@@ -366,122 +367,129 @@ export const EnhancedChatInput = forwardRef<
 
     return (
       <div className="enhanced-chat-input" ref={containerRef}>
-        <div className="enhanced-chat-input__form">
-          {renderSelectedContent()}
-
-          <div className="enhanced-chat-input__input-wrapper">
-            <textarea
-              ref={textareaRef}
-              className="enhanced-chat-input__textarea"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={hasSelection ? '描述你想要的效果...' : placeholder}
-              disabled={disabled}
-              rows={4}
-            />
-          </div>
-
-          <div className="enhanced-chat-input__footer ai-input-bar enhanced-chat-input__control-shell">
-            <div className="ai-input-bar__bottom-bar">
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={handleFileChange}
-                style={{ display: 'none' }}
+        <div className="enhanced-chat-input__composer-scope ai-input-bar">
+          <AIInputComposerShell
+            variant="drawer"
+            expanded={Boolean(input.trim()) || allContent.length > 0}
+            disabled={disabled}
+            preview={renderSelectedContent()}
+            textarea={
+              <textarea
+                ref={textareaRef}
+                className="enhanced-chat-input__textarea"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder={hasSelection ? '描述你想要的效果...' : placeholder}
+                disabled={disabled}
+                rows={4}
               />
+            }
+            leftTools={
+              <>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleFileChange}
+                  style={{ display: 'none' }}
+                />
 
-              <HoverTip
-                content={language === 'zh' ? '上传图片' : 'Upload images'}
-                placement="top"
-              >
-                <button
-                  className="ai-input-bar__upload-btn"
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                  }}
-                  onClick={handleUploadClick}
-                  aria-label={language === 'zh' ? '上传图片' : 'Upload images'}
-                  type="button"
+                <HoverTip
+                  content={language === 'zh' ? '上传图片' : 'Upload images'}
+                  placement="top"
                 >
-                  <ImageUploadIcon size={18} />
-                </button>
-              </HoverTip>
+                  <button
+                    className="ai-input-bar__upload-btn"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
+                    onClick={handleUploadClick}
+                    aria-label={
+                      language === 'zh' ? '上传图片' : 'Upload images'
+                    }
+                    type="button"
+                  >
+                    <ImageUploadIcon size={18} />
+                  </button>
+                </HoverTip>
 
-              <HoverTip
-                content={
-                  language === 'zh' ? '从素材库选择' : 'Select from library'
-                }
-                placement="top"
-              >
-                <button
-                  className="ai-input-bar__library-btn"
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                  }}
-                  onClick={() => setShowMediaLibrary(true)}
-                  aria-label={
+                <HoverTip
+                  content={
                     language === 'zh' ? '从素材库选择' : 'Select from library'
                   }
-                  type="button"
+                  placement="top"
                 >
-                  <MediaLibraryIcon size={18} />
-                </button>
-              </HoverTip>
-
-              <GenerationTypeDropdown
-                value={generationControls.generationType}
-                onSelect={generationControls.setGenerationType}
-                disabled={disabled}
-              />
-              <ModelDropdown
-                selectedModel={generationControls.selectedModel}
-                selectedSelectionKey={generationControls.selectedSelectionKey}
-                onSelect={generationControls.handleModelSelect}
-                onSelectModel={generationControls.handleModelConfigSelect}
-                language={language}
-                models={generationControls.currentModels}
-                placement="up"
-                header={
-                  language === 'zh'
-                    ? isGenerationMode
-                      ? '选择模型 (↑↓ Tab)'
-                      : '选择文本模型 (↑↓ Tab)'
-                    : isGenerationMode
-                    ? 'Select model (↑↓ Tab)'
-                    : 'Select text model (↑↓ Tab)'
-                }
-                disabled={disabled}
-              />
-              {isGenerationMode &&
-                generationControls.compatibleParams.length > 0 && (
-                  <ParametersDropdown
-                    key={generationControls.selectedModel}
-                    selectedParams={generationControls.selectedParams}
-                    onParamChange={generationControls.handleParamSelect}
-                    compatibleParams={generationControls.compatibleParams}
-                    modelId={generationControls.selectedModel}
-                    language={language}
-                    disabled={disabled}
-                    placement="up"
-                  />
-                )}
-              {isGenerationMode &&
-                generationControls.generationType !== 'text' &&
-                generationControls.generationType !== 'audio' && (
-                  <CountDropdown
-                    value={generationControls.selectedCount}
-                    onSelect={generationControls.setSelectedCount}
-                    disabled={disabled}
-                  />
-                )}
-
-              <div className="ai-input-bar__bottom-spacer" />
-
+                  <button
+                    className="ai-input-bar__library-btn"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
+                    onClick={() => setShowMediaLibrary(true)}
+                    aria-label={
+                      language === 'zh' ? '从素材库选择' : 'Select from library'
+                    }
+                    type="button"
+                  >
+                    <MediaLibraryIcon size={18} />
+                  </button>
+                </HoverTip>
+              </>
+            }
+            controls={
+              <>
+                <GenerationTypeDropdown
+                  value={generationControls.generationType}
+                  onSelect={generationControls.setGenerationType}
+                  disabled={disabled}
+                />
+                <ModelDropdown
+                  selectedModel={generationControls.selectedModel}
+                  selectedSelectionKey={generationControls.selectedSelectionKey}
+                  onSelect={generationControls.handleModelSelect}
+                  onSelectModel={generationControls.handleModelConfigSelect}
+                  language={language}
+                  models={generationControls.currentModels}
+                  placement="up"
+                  header={
+                    language === 'zh'
+                      ? isGenerationMode
+                        ? '选择模型 (↑↓ Tab)'
+                        : '选择文本模型 (↑↓ Tab)'
+                      : isGenerationMode
+                      ? 'Select model (↑↓ Tab)'
+                      : 'Select text model (↑↓ Tab)'
+                  }
+                  disabled={disabled}
+                />
+                {isGenerationMode &&
+                  generationControls.compatibleParams.length > 0 && (
+                    <ParametersDropdown
+                      key={generationControls.selectedModel}
+                      selectedParams={generationControls.selectedParams}
+                      onParamChange={generationControls.handleParamSelect}
+                      compatibleParams={generationControls.compatibleParams}
+                      modelId={generationControls.selectedModel}
+                      language={language}
+                      disabled={disabled}
+                      placement="up"
+                    />
+                  )}
+                {isGenerationMode &&
+                  generationControls.generationType !== 'text' &&
+                  generationControls.generationType !== 'audio' && (
+                    <CountDropdown
+                      value={generationControls.selectedCount}
+                      onSelect={generationControls.setSelectedCount}
+                      disabled={disabled}
+                    />
+                  )}
+              </>
+            }
+            sendButton={
               <button
                 className={`ai-input-bar__send-btn ${isActive ? 'active' : ''}`}
                 onMouseDown={(e) => {
@@ -495,8 +503,8 @@ export const EnhancedChatInput = forwardRef<
               >
                 <Send size={18} />
               </button>
-            </div>
-          </div>
+            }
+          />
         </div>
 
         {showMediaLibrary && (

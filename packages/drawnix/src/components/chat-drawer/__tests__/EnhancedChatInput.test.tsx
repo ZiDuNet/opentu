@@ -81,6 +81,21 @@ afterEach(() => {
 });
 
 describe('EnhancedChatInput placeholder', () => {
+  it('renders through the shared drawer composer shell', () => {
+    render(
+      <EnhancedChatInput
+        selectedContent={[]}
+        onSend={() => undefined}
+        placeholder="继续描述要修改的内容..."
+      />
+    );
+
+    expect(screen.getByTestId('ai-input-composer-shell-drawer')).toBeTruthy();
+    expect(screen.getByTestId('drawer-ai-send-btn')).toBeTruthy();
+    expect(screen.getByText('类型')).toBeTruthy();
+    expect(screen.getByText('模型')).toBeTruthy();
+  });
+
   it('uses continuation copy when there is no attached content', () => {
     render(
       <EnhancedChatInput
@@ -90,9 +105,7 @@ describe('EnhancedChatInput placeholder', () => {
       />
     );
 
-    expect(
-      screen.getByPlaceholderText('继续描述要修改的内容...')
-    ).toBeTruthy();
+    expect(screen.getByPlaceholderText('继续描述要修改的内容...')).toBeTruthy();
   });
 
   it('keeps effect-description copy when content is attached', () => {

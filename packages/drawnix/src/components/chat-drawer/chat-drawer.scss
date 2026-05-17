@@ -37,9 +37,7 @@ $drawer-input-max-height: 280px;
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  transition:
-    transform $animation-duration ease-out,
-    opacity 160ms ease-out,
+  transition: transform $animation-duration ease-out, opacity 160ms ease-out,
     visibility 0s linear $animation-duration;
   color-scheme: light; // 强制光照模式配色，防止紫色干扰
 
@@ -48,9 +46,7 @@ $drawer-input-max-height: 280px;
     opacity: 1;
     visibility: visible;
     pointer-events: auto;
-    transition:
-      transform $animation-duration ease-out,
-      opacity 160ms ease-out;
+    transition: transform $animation-duration ease-out, opacity 160ms ease-out;
   }
 
   &--dragging {
@@ -227,9 +223,7 @@ $drawer-input-max-height: 280px;
   right: var(--aitu-toolbar-right-dock-width, 0px);
 
   &.chat-drawer--open {
-    box-shadow:
-      100vw 0 0 100vw #ffffff,
-      -4px 0 16px rgba(0, 0, 0, 0.08);
+    box-shadow: 100vw 0 0 100vw #ffffff, -4px 0 16px rgba(0, 0, 0, 0.08);
   }
 }
 
@@ -807,8 +801,9 @@ $drawer-input-max-height: 280px;
     padding-bottom: calc(env(safe-area-inset-bottom, 0px) + #{$spacing-sm});
     max-height: min(42vh, 260px);
 
-    &__form {
-      padding: 6px;
+    .ai-input-composer-shell--drawer {
+      padding: 8px 10px;
+      border-radius: 16px;
     }
 
     &__textarea {
@@ -816,7 +811,7 @@ $drawer-input-max-height: 280px;
       font-size: 15px;
     }
 
-    &__control-shell .ai-input-bar__send-btn {
+    .ai-input-bar__send-btn {
       width: 36px;
       height: 36px;
       min-width: 36px;
@@ -895,9 +890,9 @@ $drawer-input-max-height: 280px;
     padding: $spacing-xs $spacing-sm;
     max-height: min(46vh, 220px);
 
-    &__form {
-      padding: 4px;
-      border-radius: 12px;
+    .ai-input-composer-shell--drawer {
+      padding: 6px;
+      border-radius: 14px;
     }
 
     &__textarea {
@@ -968,7 +963,7 @@ $drawer-input-max-height: 280px;
       height: 28px;
     }
 
-    &__control-shell .ai-input-bar__send-btn {
+    .ai-input-bar__send-btn {
       width: 32px;
       height: 32px;
       min-width: 32px;
@@ -1033,11 +1028,16 @@ $drawer-input-max-height: 280px;
     align-self: flex-end;
 
     .chat-message-content {
-      background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
-      color: white;
+      background: #ffffff;
+      color: var(--td-text-color-primary);
       border-radius: $border-radius $border-radius 4px $border-radius;
-      border: none;
-      box-shadow: 0 4px 12px rgba(243, 156, 18, 0.2);
+      border: 1px solid rgba(15, 23, 42, 0.08);
+      box-shadow: 0 2px 10px rgba(15, 23, 42, 0.05);
+    }
+
+    .chat-message-avatar {
+      background: rgba(15, 23, 42, 0.04);
+      color: var(--td-text-color-secondary);
     }
   }
 
@@ -1337,158 +1337,66 @@ $drawer-input-max-height: 280px;
   overflow-y: auto;
   overscroll-behavior: contain;
 
-  // 选中内容预览（对齐 AIInputBar 样式）
+  &__composer-scope.ai-input-bar {
+    position: static;
+    inset: auto;
+    z-index: auto;
+    display: block;
+    width: 100%;
+    max-width: none;
+    padding: 0;
+    transform: none;
+    pointer-events: auto;
+    bottom: auto;
+    left: auto;
+  }
+
+  .ai-input-composer-shell--drawer {
+    border: 1px solid rgba(17, 24, 39, 0.08);
+    border-radius: 18px;
+    padding: 10px 12px 10px;
+    background: #ffffff;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+    transition: border-color 0.18s ease, box-shadow 0.18s ease;
+
+    &:focus-within {
+      border-color: rgba(245, 158, 11, 0.42);
+      box-shadow: 0 10px 28px rgba(245, 158, 11, 0.12);
+    }
+
+    .ai-input-composer-shell__input-area {
+      gap: 8px;
+      margin-bottom: 8px;
+      max-height: none;
+    }
+
+    .ai-input-composer-shell__bottom-bar {
+      min-height: 36px;
+      gap: 6px;
+    }
+
+    .ai-input-composer-shell__bottom-start,
+    .ai-input-composer-shell__bottom-controls {
+      gap: 4px;
+    }
+
+    .ai-input-composer-shell__bottom-controls {
+      overflow: hidden;
+    }
+
+    .ai-input-composer-shell__preview {
+      padding: 0;
+    }
+  }
+
   &__selection {
     display: flex;
     flex-wrap: wrap;
     gap: $spacing-sm;
-    padding: 0 12px 2px;
+    padding: 0 2px;
     margin: 0;
     border-bottom: none;
     align-items: center;
-  }
-
-  &__selection-item {
-    position: relative;
-    width: 36px;
-    height: 36px;
-    border-radius: 4px;
-    overflow: hidden;
-    background: #f5f5f5;
-    flex-shrink: 0;
-    cursor: pointer;
-    transition: transform 0.15s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    &:hover {
-      transform: scale(1.05);
-    }
-
-    img,
-    video {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-      background: #f5f5f5;
-    }
-
-    &--graphics {
-      border: 1px solid #f39c12;
-    }
-
-    &--video {
-      border: 2px solid #3b82f6;
-    }
-
-    &--text {
-      width: auto;
-      height: auto;
-      min-width: 64px;
-      max-width: 180px;
-      padding: 8px 12px;
-      background: #eff6ff;
-      border: 1px solid #bfdbfe;
-      display: flex;
-      align-items: center;
-      justify-content: flex-start;
-    }
-  }
-
-  &__form {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    background: #ffffff;
-    border-radius: 24px;
-    padding: 12px 12px 10px;
-    border: 1px solid var(--td-component-border);
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-    transition: all 0.3s ease;
-
-    &:focus-within {
-      border-color: var(--td-brand-color);
-      box-shadow: 0 4px 20px rgba(243, 156, 18, 0.15);
-    }
-  }
-
-  &__input-wrapper {
-    position: relative;
-    width: 100%;
-  }
-
-  &__footer {
-    width: 100%;
-  }
-
-  &__control-shell.ai-input-bar {
-    position: static;
-    inset: auto;
-    transform: none;
-    z-index: auto;
-    max-width: none;
-    padding: 0;
-    pointer-events: auto;
-    align-items: stretch;
-    gap: 0;
-
-    .ai-input-bar__bottom-bar {
-      min-height: 40px;
-    }
-  }
-
-  // 高亮背景层 - 显示模型/参数/个数标签的背景色块
-  &__highlight-layer {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    padding: 10px 12px;
-    font-size: 14px;
-    line-height: 1.5;
-    white-space: pre-wrap;
-    word-wrap: break-word;
-    word-break: break-word;
-    pointer-events: none;
-    font-family: inherit;
-    overflow: hidden;
-    z-index: 1;
-    box-sizing: border-box;
-  }
-
-  &__highlight-text {
-    color: transparent;
-  }
-
-  &__highlight-tag {
-    color: transparent;
-    border-radius: 3px;
-    box-decoration-break: clone;
-    -webkit-box-decoration-break: clone;
-    padding: 0 2px;
-    margin: 0 -2px;
-
-    // 图片模型标签 - 红色背景
-    &--image {
-      background: rgba(229, 57, 53, 0.15);
-    }
-
-    // 视频模型标签 - 橙色背景
-    &--video {
-      background: rgba(255, 152, 0, 0.15);
-    }
-
-    // 参数标签 - 紫色背景
-    &--param {
-      background: rgba(156, 39, 176, 0.15);
-    }
-
-    // 个数标签 - 蓝色背景
-    &--count {
-      background: rgba(33, 150, 243, 0.15);
-    }
   }
 
   &__textarea {
@@ -1497,10 +1405,10 @@ $drawer-input-max-height: 280px;
     width: 100%;
     min-height: 52px;
     max-height: 120px;
-    padding: 4px 12px 0;
+    padding: 8px 10px 4px;
     background: transparent;
     border: none;
-    border-radius: 12px;
+    border-radius: 0;
     resize: none;
     font-size: 14px;
     line-height: 1.5;
