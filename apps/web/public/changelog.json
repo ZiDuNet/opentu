@@ -1,6 +1,30 @@
 {
   "versions": [
     {
+      "version": "0.9.8",
+      "date": "2026-05-17",
+      "changes": {
+        "features": [
+          "添加批量插入功能"
+        ],
+        "fixes": [
+          "split batch media action copy by target context",
+          "support bulk media insertion and image generation compatibility"
+        ],
+        "improvements": [
+          "Refactor canvas batch insertion to viewport flow layout",
+          "修复对话输入框内层描边并抽出共享壳",
+          "聊天抽屉图片预览收口到列表层",
+          "补充首屏壳层与 chunk 守门经验",
+          "修复素材库配色与多选架构，补充UI规范和架构说明",
+          "修复：蒙版预览缓存不进入素材库",
+          "Bump web app version to 0.9.7"
+        ]
+      },
+      "type": "patch",
+      "highlights": "添加批量插入功能"
+    },
+    {
       "version": "0.9.7",
       "date": "2026-05-09",
       "changes": {
@@ -770,21 +794,6 @@
       },
       "type": "patch",
       "highlights": "提前显示常驻工具图标"
-    },
-    {
-      "version": "0.6.44",
-      "date": "2026-04-22",
-      "changes": {
-        "features": [
-          "增强提示词优化器并修复画布输入框交互"
-        ],
-        "fixes": [
-          "收敛 PostHog error tracking 噪音并补齐运行时容错"
-        ],
-        "improvements": []
-      },
-      "type": "patch",
-      "highlights": "增强提示词优化器并修复画布输入框交互"
     }
   ]
 }

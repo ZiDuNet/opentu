@@ -1,8 +1,14 @@
 {
-  "version": "0.9.7",
-  "buildTime": "2026-05-09T01:04:54.067Z",
+  "version": "0.9.8",
+  "buildTime": "2026-05-17T06:20:47.527Z",
   "gitCommit": "unknown",
   "changelog": [
-    "修复批量导入图片弹窗显示异常"
+    "support bulk media insertion and image generation compatibility",
+    "修复素材库配色与多选架构，补充UI规范和架构说明",
+    "补充首屏壳层与 chunk 守门经验",
+    "修复对话输入框内层描边并抽出共享壳",
+    "修复：蒙版预览缓存不进入素材库",
+    "聊天抽屉图片预览收口到列表层",
+    "添加批量插入功能"
   ]
 }
