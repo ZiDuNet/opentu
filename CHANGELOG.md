@@ -1,3 +1,22 @@
+## 0.9.9 (2026-05-18)
+
+### 🚀 Features
+
+- 供应商设置增加「图片优先使用异步接口」开关 ([1fc6aadc](https://github.com/ljquan/aitu/commit/1fc6aadc))
+
+### 🩹 Fixes
+
+- 异步接口开关持久化 + 图片任务刷新后恢复轮询 ([08f05614](https://github.com/ljquan/aitu/commit/08f05614))
+
+### 🔧 Chores
+
+- 修复：同步聊天抽屉素材库批量选择 ([06fee16e](https://github.com/ljquan/aitu/commit/06fee16e))
+- 更新应用版本到 0.9.8 ([a70d1053](https://github.com/ljquan/aitu/commit/a70d1053))
+
+### ❤️  Thank You
+
+- liquid <ljquan@qq.com>
+
 ## 0.9.8 (2026-05-17)
 
 ### 🚀 Features
