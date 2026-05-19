@@ -165,6 +165,13 @@ function isSeedanceModel(model: ModelConfig): boolean {
   return model.id.toLowerCase().includes('seedance');
 }
 
+function shouldPreferAsyncImageBinding(
+  profile: ProviderProfileSnapshot,
+  model: ModelConfig
+): boolean {
+  return !!profile.preferAsyncImageEndpoint && model.type === 'image';
+}
+
 function isHappyHorseModel(model: ModelConfig): boolean {
   const lowerId = model.id.toLowerCase();
   return (
@@ -479,11 +486,7 @@ function inferImageBindings(
       ? 'tuzi.image.gpt-generation-json'
       : 'openai.image.basic-json';
 
-    if (
-      !isMidjourneyModel(model) &&
-      isAsyncImageModel(model.id) &&
-      profile.preferAsyncImageEndpoint
-    ) {
+    if (shouldPreferAsyncImageBinding(profile, model)) {
       bindings.push(
         buildBinding(profile, model, {
           protocol: 'openai.async.media',
@@ -498,11 +501,7 @@ function inferImageBindings(
       );
     }
 
-    if (
-      !isAsyncImageModel(model.id) ||
-      !profile.preferAsyncImageEndpoint ||
-      isSeedreamModel(model)
-    ) {
+    if (!shouldPreferAsyncImageBinding(profile, model)) {
       bindings.push(
         buildBinding(profile, model, {
           protocol: 'openai.images.generations',
@@ -524,7 +523,7 @@ function inferImageBindings(
     }
 
     if (
-      (!isAsyncImageModel(model.id) || !profile.preferAsyncImageEndpoint) &&
+      !shouldPreferAsyncImageBinding(profile, model) &&
       isGptImageModel(model) &&
       resolvedImageApiCompatibility === 'openai-gpt-image'
     ) {
@@ -551,7 +550,7 @@ function inferImageBindings(
     }
 
     if (
-      (!isAsyncImageModel(model.id) || !profile.preferAsyncImageEndpoint) &&
+      !shouldPreferAsyncImageBinding(profile, model) &&
       isGptImageModel(model) &&
       resolvedImageApiCompatibility === 'tuzi-gpt-image'
     ) {
@@ -825,20 +824,6 @@ export function inferBindingsForProviderModel(
   model: ModelConfig,
   endpointHints?: Record<string, PricingEndpointInfo> | null
 ): ProviderModelBinding[] {
-  if (model.id === 'gpt-image-2') {
-    console.debug('[binding-inference] inferBindingsForProviderModel', {
-      modelId: model.id,
-      modelType: model.type,
-      profileId: profile.id,
-      profileName: profile.name,
-      profileType: profile.providerType,
-      preferAsync: profile.preferAsyncImageEndpoint,
-      endpointHintsKeys: endpointHints ? Object.keys(endpointHints) : null,
-      hasAsyncImageScenario: endpointHints
-        ? Object.values(endpointHints).some(ep => ep.scenario === 'async-image')
-        : false,
-    });
-  }
   let bindings: ProviderModelBinding[];
   switch (model.type) {
     case 'text':

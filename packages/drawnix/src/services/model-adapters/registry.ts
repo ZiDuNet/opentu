@@ -90,7 +90,8 @@ export function resolveAdapterForModel(
     if (adapter.matchModels?.includes(modelId)) return true;
 
     // 3) 自定义匹配函数
-    if (adapter.matchPredicate && adapter.matchPredicate(modelConfig)) return true;
+    if (adapter.matchPredicate && adapter.matchPredicate(modelConfig))
+      return true;
 
     // 4) 标签匹配
     if (
@@ -178,15 +179,6 @@ export function resolveAdapterForInvocation(
   );
 
   if (plan) {
-    console.debug('[resolveAdapterForInvocation] plan resolved', {
-      kind,
-      modelId,
-      bindingProtocol: plan.binding.protocol,
-      bindingRequestSchema: plan.binding.requestSchema,
-      bindingSubmitPath: plan.binding.submitPath,
-      bindingPriority: plan.binding.priority,
-      bindingSource: plan.binding.source,
-    });
     const adapter = resolveAdapterForBinding(plan.binding, kind);
     if (adapter) {
       return adapter;

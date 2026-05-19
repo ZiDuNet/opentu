@@ -143,15 +143,6 @@ export class InvocationPlanner {
       )
       .sort(compareBindings);
 
-    console.debug('[InvocationPlanner] sorted bindings for', request.operation, targetModelRef.modelId,
-      JSON.stringify(bindings.map(b => ({
-        p: b.protocol,
-        rs: b.requestSchema,
-        pri: b.priority,
-        src: b.source,
-        conf: b.confidence,
-      }))));
-
     if (bindings.length === 0) {
       throw new InvocationPlanningError(
         `No protocol binding for ${targetModelRef.profileId}/${targetModelRef.modelId}/${request.operation}`
