@@ -261,4 +261,87 @@ describe('runtime-model-discovery', () => {
       vendor: 'HAPPYHORSE',
     });
   });
+
+  it('优先按接口 category 分类模型', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({
+        ok: true,
+        text: async () =>
+          JSON.stringify({
+            data: [
+              {
+                id: 'gpt-4o-image-async',
+                owned_by: 'openai',
+                category: '生图',
+                supported_endpoint_types: [
+                  'OpenAI-Chat',
+                  'edit',
+                  'generate',
+                  'openai-video',
+                ],
+              },
+              {
+                id: 'research-video-preview',
+                owned_by: 'openai',
+                category: '文本',
+                supported_endpoint_types: ['openai-video'],
+              },
+            ],
+          }),
+      }))
+    );
+
+    vi.doMock('../settings-manager', () => ({
+      LEGACY_DEFAULT_PROVIDER_PROFILE_ID: 'legacy-default',
+      providerCatalogsSettings: {
+        get: () => [],
+        addListener: () => {},
+        removeListener: () => {},
+        update: async () => {},
+      },
+      providerProfilesSettings: {
+        get: () => [
+          {
+            id: 'provider-openai',
+            name: 'OpenAI',
+            enabled: true,
+          },
+        ],
+        addListener: () => {},
+        removeListener: () => {},
+      },
+      invocationPresetsSettings: {
+        addListener: () => {},
+        removeListener: () => {},
+      },
+      settingsManager: {
+        getSetting: () => ({}),
+        addListener: () => {},
+        removeListener: () => {},
+      },
+    }));
+
+    const { runtimeModelDiscovery } = await import('../runtime-model-discovery');
+
+    const models = await runtimeModelDiscovery.discover(
+      'provider-openai',
+      'https://api.example.com/v1',
+      'test-key'
+    );
+
+    expect(models).toHaveLength(2);
+    expect(models.find((model) => model.id === 'gpt-4o-image-async')).toMatchObject(
+      {
+        type: 'image',
+        vendor: 'GPT',
+      }
+    );
+    expect(models.find((model) => model.id === 'research-video-preview')).toMatchObject(
+      {
+        type: 'text',
+        vendor: 'GPT',
+      }
+    );
+  });
 });

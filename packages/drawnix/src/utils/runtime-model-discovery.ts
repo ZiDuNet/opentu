@@ -33,6 +33,7 @@ export interface RemoteModelListItem {
   object?: string;
   created?: number;
   owned_by?: string;
+  category?: string;
   supported_endpoint_types?: string[];
 }
 
@@ -153,6 +154,91 @@ function hasAnyEndpointHint(
   patterns: readonly InferencePattern[]
 ): boolean {
   return endpointHints.some((hint) => matchesAnyPattern(hint, patterns));
+}
+
+function inferModelTypeFromCategory(category?: unknown): ModelType | null {
+  const normalized = typeof category === 'string' ? category.trim().toLowerCase() : '';
+  if (!normalized) return null;
+
+  if (
+    matchesAnyPattern(normalized, [
+      '视频',
+      'video',
+      'videos',
+      'movie',
+      'film',
+      'video_generation',
+      'video-generation',
+      'text-to-video',
+      'image-to-video',
+      't2v',
+      'i2v',
+    ])
+  ) {
+    return 'video';
+  }
+
+  if (
+    matchesAnyPattern(normalized, [
+      '生图',
+      '图片',
+      '图像',
+      '绘图',
+      'image',
+      'images',
+      'img',
+      'picture',
+      'photo',
+      'image_generation',
+      'image-generation',
+      'text-to-image',
+      'image-to-image',
+      't2i',
+      'i2i',
+    ])
+  ) {
+    return 'image';
+  }
+
+  if (
+    matchesAnyPattern(normalized, [
+      '音频',
+      '音乐',
+      '语音',
+      'audio',
+      'music',
+      'voice',
+      'speech',
+      'suno',
+    ])
+  ) {
+    return 'audio';
+  }
+
+  if (
+    matchesAnyPattern(normalized, [
+      '文本',
+      '文字',
+      '对话',
+      '聊天',
+      '语言',
+      '研究',
+      '推理',
+      '代码',
+      'text',
+      'chat',
+      'llm',
+      'language',
+      'research',
+      'reasoning',
+      'coder',
+      'code',
+    ])
+  ) {
+    return 'text';
+  }
+
+  return null;
 }
 
 function inferVendorByKeywords(modelId: string): ModelVendor {
@@ -400,6 +486,11 @@ function inferVendor(model: RemoteModelListItem): ModelVendor {
 }
 
 function inferModelType(model: RemoteModelListItem): ModelType {
+  const categoryType = inferModelTypeFromCategory(model.category);
+  if (categoryType) {
+    return categoryType;
+  }
+
   const endpointHints = (model.supported_endpoint_types || [])
     .map((item) => item.toLowerCase())
     .filter(Boolean);
@@ -450,23 +541,8 @@ function inferModelType(model: RemoteModelListItem): ModelType {
     return 'audio';
   }
 
-  if (
-    hasHint(
-      'video',
-      'videos',
-      'video_generation',
-      'video-generation',
-      'videos.generate',
-      'video/generations',
-      'text-to-video',
-      'image-to-video',
-      't2v',
-      'i2v',
-      'video-edit',
-      'video_edit'
-    )
-  ) {
-    return 'video';
+  if (hasImageIdSignal()) {
+    return 'image';
   }
 
   if (
@@ -487,6 +563,25 @@ function inferModelType(model: RemoteModelListItem): ModelType {
     )
   ) {
     return 'image';
+  }
+
+  if (
+    hasHint(
+      'video',
+      'videos',
+      'video_generation',
+      'video-generation',
+      'videos.generate',
+      'video/generations',
+      'text-to-video',
+      'image-to-video',
+      't2v',
+      'i2v',
+      'video-edit',
+      'video_edit'
+    )
+  ) {
+    return 'video';
   }
 
   switch (vendor) {
@@ -767,7 +862,32 @@ function adaptRuntimeModel(model: RemoteModelListItem): ModelConfig | null {
 
   const staticConfig = getStaticModelConfig(model.id);
   if (staticConfig) {
-    return cloneModelConfig(staticConfig);
+    const clonedConfig = cloneModelConfig(staticConfig);
+    const categoryType = inferModelTypeFromCategory(model.category);
+    if (!categoryType || categoryType === staticConfig.type) {
+      return clonedConfig;
+    }
+
+    return {
+      ...clonedConfig,
+      type: categoryType,
+      imageDefaults:
+        categoryType === 'image'
+          ? staticConfig.imageDefaults || {
+              aspectRatio: 'auto',
+              width: 1024,
+              height: 1024,
+            }
+          : undefined,
+      videoDefaults:
+        categoryType === 'video'
+          ? staticConfig.videoDefaults || {
+              duration: '8',
+              size: '1280x720',
+              aspectRatio: '16:9',
+            }
+          : undefined,
+    };
   }
 
   return buildFallbackConfig(model);
