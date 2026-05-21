@@ -1,6 +1,26 @@
 {
   "versions": [
     {
+      "version": "0.9.10",
+      "date": "2026-05-21",
+      "changes": {
+        "features": [
+          "画布图片选中状态锁定优化",
+          "sync media library batch select functionality across AIInputBar and EnhancedChatInput"
+        ],
+        "fixes": [
+          "修复异步图片接口开关路由",
+          "移除图片接口默认 response_format"
+        ],
+        "improvements": [
+          "文档：补充模型分类优先级经验",
+          "调整运行时模型分类优先级并补充 category 回归测试"
+        ]
+      },
+      "type": "patch",
+      "highlights": "画布图片选中状态锁定优化"
+    },
+    {
       "version": "0.9.9",
       "date": "2026-05-18",
       "changes": {
@@ -784,20 +804,6 @@
       },
       "type": "patch",
       "highlights": "修正首屏 loading 与 CDN 优先加载链路"
-    },
-    {
-      "version": "0.6.46",
-      "date": "2026-04-22",
-      "changes": {
-        "features": [],
-        "fixes": [
-          "关闭页面时兜底恢复画布快照",
-          "前置首屏加载并修复素材库插入画布链路"
-        ],
-        "improvements": []
-      },
-      "type": "patch",
-      "highlights": "关闭页面时兜底恢复画布快照"
     }
   ]
 }

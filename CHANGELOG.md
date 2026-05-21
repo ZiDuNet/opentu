@@ -1,3 +1,30 @@
+## 0.9.10 (2026-05-21)
+
+### 🚀 Features
+
+- 画布图片选中状态锁定优化 ([12517bd7](https://github.com/ljquan/aitu/commit/12517bd7))
+- sync media library batch select functionality across AIInputBar and EnhancedChatInput ([cffb6b42](https://github.com/ljquan/aitu/commit/cffb6b42))
+
+### 🩹 Fixes
+
+- 修复异步图片接口开关路由 ([e6d10834](https://github.com/ljquan/aitu/commit/e6d10834))
+- 移除图片接口默认 response_format ([c1207e2f](https://github.com/ljquan/aitu/commit/c1207e2f))
+
+### 🔧 Chores
+
+- bump version to 0.9.9 ([26ed328a](https://github.com/ljquan/aitu/commit/26ed328a))
+- 文档：补充模型分类优先级经验 ([b5f1d169](https://github.com/ljquan/aitu/commit/b5f1d169))
+- 调整运行时模型分类优先级并补充 category 回归测试 ([805014d3](https://github.com/ljquan/aitu/commit/805014d3))
+- 发布 ([9bce5497](https://github.com/ljquan/aitu/commit/9bce5497))
+
+### ❤️  Thank You
+
+- 李泓震 <15900797+AiW520@user.noreply.gitee.com>
+- liquid <ljquan@qq.com>
+- liangkaijun <2290804689@qq.com>
+- gongchengtu <1817063960@qq.com>
+- lichenyi <lichenyi@qq.com>
+
 ## 0.9.9 (2026-05-18)
 
 ### 🚀 Features
