@@ -210,14 +210,14 @@ export class FallbackMediaExecutor implements IMediaExecutor {
     const modelName = model || config.imageConfig.modelName;
 
     // 异步图片模型：使用 /v1/videos 接口（仅当 binding 为 async-image 时）
-    const imagePlanForAsync = resolveInvocationPlanFromRoute(
+    const imagePlan = resolveInvocationPlanFromRoute(
       'image',
       modelRef || modelName,
       invocationOptions
     );
     if (
-      imagePlanForAsync?.binding.protocol === 'openai.async.media' ||
-      imagePlanForAsync?.binding.requestSchema === 'openai.async.image.form'
+      imagePlan?.binding.protocol === 'openai.async.media' ||
+      imagePlan?.binding.requestSchema === 'openai.async.image.form'
     ) {
       return this.generateAsyncImageTask(
         taskId,
@@ -231,6 +231,44 @@ export class FallbackMediaExecutor implements IMediaExecutor {
           assetMetadata: params.assetMetadata,
         },
         config,
+        options,
+        startTime
+      );
+    }
+
+    const imageAdapter = resolveAdapterForInvocation(
+      'image',
+      modelName,
+      modelRef || null,
+      invocationOptions
+    );
+    const shouldUseImageAdapter =
+      imageAdapter?.kind === 'image' &&
+      (imageAdapter.id !== 'gemini-image-adapter' ||
+        imagePlan?.binding.protocol === 'google.generateContent');
+    if (shouldUseImageAdapter) {
+      return executeImageViaAdapter(
+        taskId,
+        imageAdapter,
+        {
+          prompt,
+          model: modelName,
+          modelRef: modelRef || null,
+          size,
+          resolution: params.resolution,
+          quality,
+          count,
+          referenceImages,
+          generationMode: params.generationMode,
+          maskImage: params.maskImage,
+          inputFidelity: params.inputFidelity,
+          background: params.background,
+          outputFormat: params.outputFormat,
+          outputCompression: params.outputCompression,
+          params: params.params,
+          assetMetadata: params.assetMetadata,
+          preferredRequestSchema: invocationOptions.preferredRequestSchema,
+        },
         options,
         startTime
       );

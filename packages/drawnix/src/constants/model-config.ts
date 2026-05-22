@@ -103,7 +103,7 @@ export interface ParamConfig {
   step?: number;
   /** 是否要求整数（number 类型时使用） */
   integer?: boolean;
-  /** 兼容的模型 ID 列表（空数组表示所有模型都兼容） */
+  /** 兼容的模型 ID 列表（未设置 compatibleTags 时，空数组表示所有模型都兼容） */
   compatibleModels: string[];
   /** 兼容的模型标签列表（任一命中则视为兼容，用于减少硬编码模型 ID） */
   compatibleTags?: string[];
@@ -2433,7 +2433,8 @@ export const IMAGE_PARAMS: ParamConfig[] = [
       { value: '21:9', label: '21:9 超宽' },
     ],
     defaultValue: 'default',
-    compatibleModels: MJ_IMAGE_MODEL_IDS,
+    compatibleModels: [],
+    compatibleTags: ['mj', 'midjourney'],
     modelType: 'image',
   },
   {
@@ -2444,11 +2445,14 @@ export const IMAGE_PARAMS: ParamConfig[] = [
     valueType: 'enum',
     options: [
       { value: 'default', label: '默认 (V7)' },
+      { value: '8.1', label: 'V8.1' },
+      { value: '8', label: 'V8' },
       { value: '7', label: 'V7' },
       { value: '6', label: 'V6' },
     ],
     defaultValue: 'default',
-    compatibleModels: MJ_IMAGE_MODEL_IDS,
+    compatibleModels: [],
+    compatibleTags: ['mj', 'midjourney'],
     modelType: 'image',
   },
   {
@@ -2462,7 +2466,8 @@ export const IMAGE_PARAMS: ParamConfig[] = [
       { value: 'raw', label: 'raw (Legacy)' },
     ],
     defaultValue: 'default',
-    compatibleModels: MJ_IMAGE_MODEL_IDS,
+    compatibleModels: [],
+    compatibleTags: ['mj', 'midjourney'],
     modelType: 'image',
   },
   {
@@ -2481,7 +2486,8 @@ export const IMAGE_PARAMS: ParamConfig[] = [
       { value: '1000', label: '1000' },
     ],
     defaultValue: 'default',
-    compatibleModels: MJ_IMAGE_MODEL_IDS,
+    compatibleModels: [],
+    compatibleTags: ['mj', 'midjourney'],
     modelType: 'image',
   },
   {
@@ -2497,7 +2503,8 @@ export const IMAGE_PARAMS: ParamConfig[] = [
       { value: '4', label: '4x' },
     ],
     defaultValue: 'default',
-    compatibleModels: MJ_IMAGE_MODEL_IDS,
+    compatibleModels: [],
+    compatibleTags: ['mj', 'midjourney'],
     modelType: 'image',
   },
   {
@@ -2515,7 +2522,8 @@ export const IMAGE_PARAMS: ParamConfig[] = [
       { value: '9999', label: '9999' },
     ],
     defaultValue: 'default',
-    compatibleModels: MJ_IMAGE_MODEL_IDS,
+    compatibleModels: [],
+    compatibleTags: ['mj', 'midjourney'],
     modelType: 'image',
   },
 ];
@@ -2609,14 +2617,14 @@ export function getCompatibleParams(modelId: string): ParamConfig[] {
   return ALL_PARAMS.filter((param) => {
     // 检查模型类型是否匹配
     if (param.modelType !== modelConfig.type) return false;
-    // 检查是否在兼容 ID 列表（空数组表示所有模型都兼容）
-    const idMatched =
-      param.compatibleModels.length === 0 ||
-      param.compatibleModels.includes(modelId);
     // 检查标签兼容（可选）
     const tagMatched = param.compatibleTags
       ? param.compatibleTags.some((tag) => modelTags.has(tag.toLowerCase()))
       : false;
+    // 检查是否在兼容 ID 列表（无标签限制时，空数组表示所有模型都兼容）
+    const idMatched =
+      param.compatibleModels.includes(modelId) ||
+      (param.compatibleModels.length === 0 && !param.compatibleTags?.length);
     return idMatched || tagMatched;
   });
 }
