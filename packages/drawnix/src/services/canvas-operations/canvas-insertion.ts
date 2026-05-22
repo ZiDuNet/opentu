@@ -214,16 +214,16 @@ async function insertImageToCanvas(
   dimensions?: { width: number; height: number }
 ): Promise<{ width: number; height: number }> {
   const size = dimensions || { width: LAYOUT_CONSTANTS.MEDIA_DEFAULT_SIZE, height: LAYOUT_CONSTANTS.MEDIA_DEFAULT_SIZE };
-  logCanvasInsertionDebug('[CanvasInsertion][Service] image insert fixed size', {
+  logCanvasInsertionDebug('[CanvasInsertion][Service] image insert with size', {
     point,
     size,
-    lockReferenceDimensions: true,
+    lockReferenceDimensions: false,
     skipImageLoad: true,
   });
-  // 批量插入需要固定参考尺寸，避免图片加载后按原始比例回写导致间距抖动。
-  // 传入 skipImageLoad=true 和尺寸，立即插入图片不等待下载
+  // 使用默认尺寸立即插入，图片加载后会自动根据真实尺寸更新
   // skipSelect=true: 自动插入时不选中新图片，避免覆盖用户当前选中状态
-  await insertImageFromUrl(board, imageUrl, point, false, size, true, true, true, true);
+  // lockReferenceDimensions=false: 图片加载后根据真实尺寸更新
+  await insertImageFromUrl(board, imageUrl, point, false, size, true, true, false, true);
   return size;
 }
 
