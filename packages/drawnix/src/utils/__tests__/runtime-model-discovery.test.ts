@@ -262,6 +262,71 @@ describe('runtime-model-discovery', () => {
     });
   });
 
+  it('运行时发现 Omni Flash 系列会识别为 Gemini 供应商', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({
+        ok: true,
+        text: async () =>
+          JSON.stringify({
+            data: [
+              {
+                id: 'omni-flash',
+                owned_by: 'openai',
+                supported_endpoint_types: ['videos.generate'],
+              },
+              {
+                id: 'omni-flash-components',
+                owned_by: 'openai',
+                supported_endpoint_types: ['videos.generate'],
+              },
+            ],
+          }),
+      }))
+    );
+
+    vi.doMock('../settings-manager', () => ({
+      LEGACY_DEFAULT_PROVIDER_PROFILE_ID: 'legacy-default',
+      providerCatalogsSettings: {
+        get: () => [],
+        addListener: () => {},
+        removeListener: () => {},
+        update: async () => {},
+      },
+      providerProfilesSettings: {
+        get: () => [
+          {
+            id: 'provider-video',
+            name: 'Video Provider',
+            enabled: true,
+          },
+        ],
+        addListener: () => {},
+        removeListener: () => {},
+      },
+      invocationPresetsSettings: {
+        addListener: () => {},
+        removeListener: () => {},
+      },
+      settingsManager: {
+        getSetting: () => ({}),
+        addListener: () => {},
+        removeListener: () => {},
+      },
+    }));
+
+    const { runtimeModelDiscovery } = await import('../runtime-model-discovery');
+
+    const models = await runtimeModelDiscovery.discover(
+      'provider-video',
+      'https://api.example.com/v1',
+      'test-key'
+    );
+
+    expect(models.map((model) => model.vendor)).toEqual(['GEMINI', 'GEMINI']);
+    expect(models.map((model) => model.type)).toEqual(['video', 'video']);
+  });
+
   it('优先按接口 category 分类模型', async () => {
     vi.stubGlobal(
       'fetch',

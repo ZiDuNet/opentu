@@ -357,7 +357,6 @@ function inferVendorByKeywords(modelId: string): ModelVendor {
     lowerId.includes('whisper') ||
     lowerId.includes('codex') ||
     lowerId.includes('text-embedding') ||
-    lowerId.includes('omni') ||
     lowerId.includes('tts-') ||
     lowerId.includes('babbage') ||
     lowerId.includes('davinci') ||
@@ -368,6 +367,7 @@ function inferVendorByKeywords(modelId: string): ModelVendor {
   }
   if (
     lowerId.includes('gemini') ||
+    lowerId.includes('omni') ||
     lowerId.includes('banana') ||
     lowerId.includes('gemma') ||
     lowerId.includes('imagen') ||
@@ -381,7 +381,11 @@ function inferVendorByKeywords(modelId: string): ModelVendor {
 
 function inferVendor(model: RemoteModelListItem): ModelVendor {
   const owner = (model.owned_by || '').trim().toLowerCase();
+  const lowerId = model.id.toLowerCase();
   const keywordVendor = inferVendorByKeywords(model.id);
+  if (lowerId.includes('omni') && keywordVendor === ModelVendor.GEMINI) {
+    return ModelVendor.GEMINI;
+  }
   if (owner === 'openai' || owner.includes('openai')) return ModelVendor.GPT;
   if (owner === 'xai' || owner.includes('x.ai') || owner.includes('grok')) {
     return ModelVendor.GROK;
