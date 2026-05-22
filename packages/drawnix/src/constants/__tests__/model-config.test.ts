@@ -181,4 +181,43 @@ describe('model-config image size options', () => {
       ModelVendor.HAPPYHORSE
     );
   });
+
+  it('为 Omni Flash 系列按 Veo 3.1 暴露视频参数', () => {
+    const omniFlashParams = getCompatibleParams('omni-flash');
+    const omniComponentsParams = getCompatibleParams('omni-flash-components');
+
+    expect(getStaticModelConfig('omni-flash')).toMatchObject({
+      label: 'Gemini Omni Flash',
+      type: 'video',
+      vendor: ModelVendor.GEMINI,
+      videoDefaults: {
+        duration: '8',
+        size: '1280x720',
+        aspectRatio: '16:9',
+      },
+    });
+    expect(getStaticModelConfig('omni-flash-components')).toMatchObject({
+      label: 'Gemini Omni Flash Components',
+      type: 'video',
+      vendor: ModelVendor.GEMINI,
+      videoDefaults: {
+        duration: '8',
+        size: '1280x720',
+        aspectRatio: '16:9',
+      },
+    });
+
+    for (const params of [omniFlashParams, omniComponentsParams]) {
+      expect(
+        params
+          .find((param) => param.id === 'duration')
+          ?.options?.map((option) => option.value)
+      ).toEqual(['8']);
+      expect(
+        params
+          .find((param) => param.id === 'size')
+          ?.options?.map((option) => option.value)
+      ).toEqual(['1280x720', '720x1280']);
+    }
+  });
 });
