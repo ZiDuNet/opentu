@@ -214,15 +214,15 @@ async function insertImageToCanvas(
   logCanvasInsertionDebug('[CanvasInsertion][MCP] image insert fixed size', {
     point,
     size,
-    lockReferenceDimensions: true,
+    lockReferenceDimensions: false,
     skipImageLoad: true,
   });
-  // console.log(`[CanvasInsertion] insertImageToCanvas: url=${imageUrl.substring(0, 80)}, point=`, point, 'size=', size);
   // skipScroll: true - 由 executeCanvasInsertion 统一处理滚动
   // skipImageLoad: true - 使用传入的尺寸，不等待图片加载
+  // lockReferenceDimensions=false: 图片加载后根据真实尺寸更新
   // skipSelect=true: 自动插入时不选中新图片，避免覆盖用户当前选中状态
   try {
-    await insertImageFromUrl(board, imageUrl, point, false, size, true, true, true, true);
+    await insertImageFromUrl(board, imageUrl, point, false, size, true, true, false, true);
     // console.log(`[CanvasInsertion] insertImageFromUrl completed successfully`);
   } catch (error) {
     console.error(`[CanvasInsertion] insertImageFromUrl failed:`, error);
