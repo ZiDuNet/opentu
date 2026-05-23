@@ -1,3 +1,25 @@
+## 0.9.11 (2026-05-23)
+
+### 🚀 Features
+
+- 新增 omni-flash 视频模型支持 ([248af3f7](https://github.com/ljquan/aitu/commit/248af3f7))
+
+### 🩹 Fixes
+
+- 补修 MCP 路径 lockReferenceDimensions=true，更新完整审计文档 ([6006c7ff](https://github.com/ljquan/aitu/commit/6006c7ff))
+- 修复图片生成比例错误和 API 参数兼容性问题 | 修复 buildImageRequestBody 中 size 为比例格式时未转换像素尺寸(所有非1:1比例都生成1:1) | 移除 response_format url 参数(rix API 不支持) | 修复 lockReferenceDimensions 导致非正方形图片被压缩 ([982e6271](https://github.com/ljquan/aitu/commit/982e6271))
+- 修复 MJ 运行时模型参数与调度路由 ([fb464a86](https://github.com/ljquan/aitu/commit/fb464a86))
+
+### 🔧 Chores
+
+- docs: 补充跨 AI 提供商兼容性分析size 比例转换不影响其他 API 生图 ([edb129b7](https://github.com/ljquan/aitu/commit/edb129b7))
+- docs: 图片生成API参数兼容性与比例转换修复经验总结 ([5c06b488](https://github.com/ljquan/aitu/commit/5c06b488))
+
+### ❤️  Thank You
+
+- 李泓震 <15900797+AiW520@user.noreply.gitee.com>
+- gongchengtu <1817063960@qq.com>
+
 ## 0.9.10 (2026-05-21)
 
 ### 🚀 Features

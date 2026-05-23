@@ -1,13 +1,11 @@
 {
-  "version": "0.9.10",
-  "buildTime": "2026-05-21T15:18:53.616Z",
+  "version": "0.9.11",
+  "buildTime": "2026-05-23T03:50:46.518Z",
   "gitCommit": "unknown",
   "changelog": [
-    "sync media library batch select functionality across AIInputBar and EnhancedChatInput",
-    "调整运行时模型分类优先级并补充 category 回归测试",
-    "移除图片接口默认 response_format",
-    "文档：补充模型分类优先级经验",
-    "画布图片选中状态锁定优化",
-    "修复异步图片接口开关路由"
+    "修复图片生成比例错误和 API 参数兼容性问题 | 修复 buildImageRequestBody 中 size 为比例格式时未转换像素尺寸(所有非1:1比例都生成1:1) | 移除 response_format url 参数(rix API 不支持) | 修复 lockReferenceDimensions 导致非正方形图片被压缩",
+    "补修 MCP 路径 lockReferenceDimensions=true，更新完整审计文档",
+    "新增 omni-flash 视频模型支持",
+    "修复 MJ 运行时模型参数与调度路由"
   ]
 }
