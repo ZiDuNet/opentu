@@ -21,7 +21,7 @@ import { analytics } from '../utils/posthog-analytics';
 import { cacheRemoteUrl } from '../services/media-executor/fallback-utils';
 import { normalizeImageDataUrl } from '@aitu/utils';
 import { AssetSource, AssetType } from '../types/asset.types';
-import { getInsertionPointFromSavedSelection } from '../utils/canvas-insertion-layout';
+import { getInsertionPointFromSavedSelection, calculateImageDisplayDimensions } from '../utils/canvas-insertion-layout';
 
 export const loadHTMLImageElement = (dataURL: DataURL, crossOrigin = false) => {
   const normalizedURL = normalizeImageDataUrl(dataURL) as DataURL;
@@ -535,23 +535,14 @@ function updateImageSizeAfterLoad(
         return;
       }
 
-      // 使用图片真实尺寸，最大尺寸限制 2048 避免超大图片影响性能
-      const MAX_IMAGE_WIDTH = 2048;
-      const MAX_IMAGE_HEIGHT = 2048;
-
-      let newWidth = naturalWidth;
-      let newHeight = naturalHeight;
-
-      if (newWidth > MAX_IMAGE_WIDTH) {
-        const scale = MAX_IMAGE_WIDTH / newWidth;
-        newWidth = MAX_IMAGE_WIDTH;
-        newHeight = Math.round(newHeight * scale);
-      }
-      if (newHeight > MAX_IMAGE_HEIGHT) {
-        const scale = MAX_IMAGE_HEIGHT / newHeight;
-        newHeight = MAX_IMAGE_HEIGHT;
-        newWidth = Math.round(newWidth * scale);
-      }
+      // 使用与预计算网格布局相同的尺寸计算逻辑，确保尺寸一致不会破坏布局
+      const displayDimensions = calculateImageDisplayDimensions(
+        naturalWidth,
+        naturalHeight
+      );
+      
+      let newWidth = displayDimensions.width;
+      let newHeight = displayDimensions.height;
 
       // 通过 ID 查找元素（比索引更可靠，不受插入/删除影响）
       const elementIndex = board.children.findIndex(

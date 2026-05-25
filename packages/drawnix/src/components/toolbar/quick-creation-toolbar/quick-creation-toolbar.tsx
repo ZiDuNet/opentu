@@ -46,7 +46,7 @@ import { insertImageFromUrl } from '../../../data/image';
 import { insertVideoFromUrl } from '../../../data/video';
 import { insertAudioFromUrl } from '../../../data/audio';
 import { executeCanvasInsertion } from '../../../services/canvas-operations';
-import { logCanvasInsertionDebug } from '../../../utils/canvas-insertion-layout';
+import { logCanvasInsertionDebug, calculateImageDisplayDimensions, CANVAS_INSERTION_LAYOUT } from '../../../utils/canvas-insertion-layout';
 import { MessagePlugin } from 'tdesign-react';
 import './quick-creation-toolbar.scss';
 
@@ -236,15 +236,22 @@ export const QuickCreationToolbar: React.FC<QuickCreationToolbarProps> = ({
   };
 
   /**
-   * 预加载图片真实尺寸（素材库图片为本地缓存，加载几乎即时）
-   * 失败时降级为 400×400 默认值，不影响主流程
+   * 预加载图片并计算合理的显示尺寸（素材库图片为本地缓存，加载几乎即时）
+   * 使用与 buildImage 一致的缩放逻辑，确保网格布局正确
    */
   const loadImageDimensions = (
     url: string
   ): Promise<{ width: number; height: number }> =>
     new Promise((resolve) => {
       const img = new Image();
-      img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight });
+      img.onload = () => {
+        const dimensions = calculateImageDisplayDimensions(
+          img.naturalWidth, 
+          img.naturalHeight,
+          CANVAS_INSERTION_LAYOUT.MEDIA_MAX_SIZE
+        );
+        resolve(dimensions);
+      };
       img.onerror = () => resolve({ width: 400, height: 400 });
       img.src = url;
     });
@@ -298,6 +305,9 @@ export const QuickCreationToolbar: React.FC<QuickCreationToolbarProps> = ({
           },
         };
       }),
+      // 素材库批量插入时使用更大的间隔，让图片之间更清晰
+      horizontalGap: 30,
+      verticalGap: 40,
     });
 
     if (insertionResult.success) {
