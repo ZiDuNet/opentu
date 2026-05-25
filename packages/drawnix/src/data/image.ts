@@ -535,29 +535,22 @@ function updateImageSizeAfterLoad(
         return;
       }
 
-      // 计算图片的实际宽高比
-      const imageAspectRatio = naturalWidth / naturalHeight;
-      const referenceAspectRatio =
-        referenceDimensions.width / referenceDimensions.height;
+      // 使用图片真实尺寸，最大尺寸限制 2048 避免超大图片影响性能
+      const MAX_IMAGE_WIDTH = 2048;
+      const MAX_IMAGE_HEIGHT = 2048;
 
-      // 如果宽高比相同（误差 < 1%），不需要更新
-      if (
-        Math.abs(imageAspectRatio - referenceAspectRatio) /
-          referenceAspectRatio <
-        0.01
-      ) {
-        return;
+      let newWidth = naturalWidth;
+      let newHeight = naturalHeight;
+
+      if (newWidth > MAX_IMAGE_WIDTH) {
+        const scale = MAX_IMAGE_WIDTH / newWidth;
+        newWidth = MAX_IMAGE_WIDTH;
+        newHeight = Math.round(newHeight * scale);
       }
-
-      // 根据实际图片比例计算新的显示尺寸
-      // 以预设宽度为基准，调整高度以匹配实际比例
-      let newWidth = referenceDimensions.width;
-      let newHeight = newWidth / imageAspectRatio;
-
-      // 如果新高度超过预设高度，则以高度为基准
-      if (newHeight > referenceDimensions.height) {
-        newHeight = referenceDimensions.height;
-        newWidth = newHeight * imageAspectRatio;
+      if (newHeight > MAX_IMAGE_HEIGHT) {
+        const scale = MAX_IMAGE_HEIGHT / newHeight;
+        newHeight = MAX_IMAGE_HEIGHT;
+        newWidth = Math.round(newWidth * scale);
       }
 
       // 通过 ID 查找元素（比索引更可靠，不受插入/删除影响）

@@ -286,7 +286,183 @@ insertImageFromUrl 调用者 17 处
 
 ---
 
-## 五、修改文件清单
+## 四-B、问题 4：`updateImageSizeAfterLoad` 尺寸限制导致图片截断
+
+### 现象
+
+竖版长图（9:16）实际生成 1024x1792，但插入画布后 `foreignObject` 容器仅为 400x400 或 400x711（被参考尺寸限制），导致图片被截断或显示不完整。
+
+### 根因
+
+`updateImageSizeAfterLoad` 的旧实现将尺寸限制在 `referenceDimensions` 范围内：
+
+```typescript
+// 修改前（image.ts L552-561）
+let newWidth = referenceDimensions.width;
+let newHeight = newWidth / imageAspectRatio;
+
+// 如果新高度超过预设高度，则以高度为基准
+if (newHeight > referenceDimensions.height) {
+  newHeight = referenceDimensions.height;
+  newWidth = newHeight * imageAspectRatio;
+}
+```
+
+问题：图片真实尺寸大于参考尺寸时被强制压缩。例如：
+- API 返回 1024×1792 图片
+- 插入时 `referenceDimensions` = 400×400
+- 旧逻辑：`newWidth = 400`, `newHeight = 400 / (1024/1792) ≈ 700`，但 `700 > 400` → 被限制为 `400×400`
+
+### 修复
+
+直接使用图片的 `naturalWidth`/`naturalHeight`，仅设置上限 2048px 防止超大图片：
+
+```typescript
+// 修改后（image.ts L538-554）
+const MAX_IMAGE_WIDTH = 2048;
+const MAX_IMAGE_HEIGHT = 2048;
+
+let newWidth = naturalWidth;
+let newHeight = naturalHeight;
+
+if (newWidth > MAX_IMAGE_WIDTH) {
+  const scale = MAX_IMAGE_WIDTH / newWidth;
+  newWidth = MAX_IMAGE_WIDTH;
+  newHeight = Math.round(newHeight * scale);
+}
+if (newHeight > MAX_IMAGE_HEIGHT) {
+  const scale = MAX_IMAGE_HEIGHT / newHeight;
+  newHeight = MAX_IMAGE_HEIGHT;
+  newWidth = Math.round(newWidth * scale);
+}
+```
+
+### 风险评估
+
+**低风险**。该函数已充分考虑各种边界情况，具备完善的容错机制：
+
+1. **元素已被删除的保护**：`updateImageSizeAfterLoad` 是异步执行的（等待图片加载），用户可能在此期间删除元素。代码通过 `findIndex` 检查元素是否存在，不存在则直接返回，不会报错。
+
+2. **用户手动移动元素的保护**：用户可能在图片加载过程中拖动元素到新位置。代码使用 `currentTopLeft` 获取当前位置，只调整右下角坐标，不会覆盖用户手动调整的位置。
+
+3. **图片加载失败的保护**：网络问题或链接失效可能导致加载失败。代码使用 `.catch()` 捕获异常，仅打印警告日志，不抛出异常影响其他功能。
+
+4. **超大图片的保护**：API 可能返回超大尺寸图片（如 4096×4096）。代码设置 2048px 上限，自动按比例缩小，避免内存占用过高。
+
+5. **无效尺寸的保护**：如果图片尺寸为 0 或负数，代码在开头就会检测并返回，不会执行无效的更新操作。
+
+6. **触发条件控制**：该函数仅在 `skipImageLoad=true && lockReferenceDimensions=false` 时触发，避免不必要的重复调用。
+
+---
+
+## 四-C、问题 5：`getTaskImageDimensions` 忽略任务返回的真实尺寸
+
+### 现象
+
+任务执行后 `task.result` 包含真实图片尺寸（`width`/`height`），但插入时使用的仍是 `parseSizeToPixels(task.params.size)` 返回的估计值，而非真实值。
+
+### 根因
+
+`getTaskImageDimensions` 的优先级顺序不当——`fallback` 参数永远有值（来自 `parseSizeToPixels`），导致 `task.result` 的检查被跳过：
+
+```typescript
+// 修改前
+if (fallback) {
+  return fallback;              // ← 直接返回，跳过 task.result
+}
+const result = task.result...;  // ← 永远执行不到
+```
+
+### 修复
+
+将 `task.result` 的真实尺寸提到最优先：
+
+```typescript
+// 修改后（useAutoInsertToCanvas.ts L248-267）
+// 优先使用任务返回的真实尺寸
+const result = task.result as { width?: number; height?: number } | undefined;
+if (result?.width > 0 && result?.height > 0) {
+  return { width: result.width, height: result.height };
+}
+if (fallback) {
+  return fallback;
+}
+return parseSizeToPixels(task.params.size);
+```
+
+### 风险评估
+
+**零风险**。
+- `task.result` 无有效尺寸时降级到 `fallback`，行为不变 ✓
+- 两个调用点（L683、L1070）的 fallback 均来自 `parseSizeToPixels`，语义一致 ✓
+- 下游 `insertedSize`/`syncImageAnchorGeometry` 拿到更准确的尺寸，无副作用 ✓
+
+---
+
+## 四-D、问题 6：素材库批量插入时图片叠加
+
+### 现象
+
+从素材库批量插入多张不同比例的图片到画布时，图片彼此堆叠覆盖，而非分开排列。
+
+### 根因：尺寸链路不同步
+
+```
+批量插入
+  → estimateInsertionItemSize: 无 dimensions → 默认 400×400
+  → advanceBatchInsertionFlow: 按 400×400 估算间距排位
+  → insertImageToCanvas: 用 400×400 插入
+  → updateImageSizeAfterLoad (异步): 扩展为真实尺寸 (如 1024×1792)
+  → 真实尺寸 >> 排位间距 → 图片叠加
+```
+
+核心矛盾：排位系统以 400×400 为基准计算间距，但图片最终显示为真实尺寸（修复后），导致超出分配空间。
+
+### 修复
+
+在批量插入前预加载每张素材图片的真实尺寸，传给 `executeCanvasInsertion` 的 `item.dimensions`：
+
+```typescript
+// quick-creation-toolbar.tsx L238-280
+const loadImageDimensions = (url: string) =>
+  new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight });
+    img.onerror = () => resolve({ width: 400, height: 400 }); // 降级
+    img.src = url;
+  });
+
+// 并行预加载所有图片尺寸
+const imageDimensionsMap = new Map();
+const results = await Promise.all(imageAssets.map(a => loadImageDimensions(a.url)));
+// 传给 executeCanvasInsertion 的 item.dimensions
+```
+
+### 效果链路
+
+```
+预加载真实尺寸 (1024×1792)
+  → estimateInsertionItemSize: 使用真实尺寸
+  → advanceBatchInsertionFlow: 按真实间距排位 → 互不重叠 ✓
+  → insertImageToCanvas: 用真实尺寸插入
+  → updateImageSizeAfterLoad: 尺寸已匹配 → 几乎无变化 ✓
+```
+
+### 风险评估
+
+**零风险**。
+- 失败降级：`img.onerror` → 400×400，不阻塞 ✓
+- 性能：本地缓存图片，`Promise.all` 并行加载，几乎无延迟 ✓
+- 影响范围：**仅素材库「批量插入画布」这一个入口**，其他插入路径完全不变 ✓
+- 视频/音频：`loadImageDimensions` 仅处理 `AssetType.IMAGE`，不触发 ✓
+- `dimensions` 为可选字段，不传时行为不变 ✓
+- 与其他修改的关系：依赖 `updateImageSizeAfterLoad` 使用真实尺寸，但即使不依赖也能正常工作（排位已按真实尺寸预留） ✓
+
+---
+
+## 五、修改文件清单（完整）
+
+### 第一轮修复（已提交）
 
 | 文件 | 修改内容 | 影响范围 |
 |------|---------|---------|
@@ -295,6 +471,14 @@ insertImageFromUrl 调用者 17 处
 | `packages/drawnix/src/services/sw-capabilities/handler.ts` | 2 处 `lockReferenceDimensions: false` | SW 自动插入 |
 | `packages/drawnix/src/mcp/tools/canvas-insertion.ts` | `lockReferenceDimensions: true → false` | MCP 协议插入 |
 
+### 第二轮修复（当前，未提交）
+
+| 文件 | 修改内容 | 影响范围 |
+|------|---------|---------|
+| `packages/drawnix/src/data/image.ts` | `updateImageSizeAfterLoad` 改用图片真实 `naturalWidth/naturalHeight`，上限 2048px | 异步尺寸更新 |
+| `packages/drawnix/src/hooks/useAutoInsertToCanvas.ts` | `getTaskImageDimensions` 优先使用 `task.result` 真实尺寸 | AI 生成图片插入 |
+| `packages/drawnix/src/components/toolbar/quick-creation-toolbar/quick-creation-toolbar.tsx` | 批量插入前预加载素材库图片真实尺寸 | 素材库批量插入 |
+
 ### 未修改的文件（已验证不受影响）
 
 - `packages/drawnix/src/services/model-adapters/gpt-image-adapter.ts` — 自有 `response_format` 处理
@@ -302,10 +486,46 @@ insertImageFromUrl 调用者 17 处
 - `packages/drawnix/src/services/media-api/utils.ts` — 仅 `aspectRatioToSize` 被引用，逻辑不变
 - `packages/drawnix/src/hooks/useWorkflowSubmission.ts` — 手动插入场景，传入真实尺寸
 - 其他手动插入路径 — `lockReferenceDimensions` 未传或使用真实尺寸
+- 其他批量插入入口 — 不走素材库，不受预加载修改影响
 
 ---
 
-## 六、经验总结
+## 六、修改间依赖关系
+
+```
+                    ┌─────────────────────────┐
+                    │   buildImageRequestBody  │
+                    │  (问题1+2) 已提交         │
+                    │  - 删除 response_format│
+                    │  - size 比例转换        │
+                    └─────────────────────────┘
+                                │
+                                ▼
+                    ┌─────────────────────────┐
+                    │   insertImageFromUrl     │
+                    │  (问题3) 已提交          │
+                    │  - lockReferenceDimensions = false │
+                    └───────────┬─────────────┘
+                                │
+              ┌─────────────────┼─────────────────┐
+              ▼                 ▼                  ▼
+  ┌──────────────────┐ ┌──────────────┐ ┌────────────────────┐
+  │ updateImageSize  │ │getTaskImage  │ │ 素材库批量预加载     │
+  │ AfterLoad        │ │Dimensions    │ │ (问题6) 当前         │
+  │ (问题4) 当前     │ │(问题5) 当前  │ │ - 预加载真实尺寸     │
+  │ - 使用 natural   │ │- task.result │ │ - 传给 dimensions   │
+  │   Width/Height   │ │  优先级提前  │ │                     │
+  └──────────────────┘ └──────────────┘ └────────────────────┘
+```
+
+**独立性**：
+- 问题 1+2（API 层）与问题 3-6（画布层）完全独立
+- 问题 4（`updateImageSizeAfterLoad`）是问题 6（批量插入叠加）的前提——如果恢复旧的尺寸限制，批量插入预加载的间距也将失效
+- 问题 5（`getTaskImageDimensions`）独立于其他修改，仅优化 AI 生成场景的尺寸获取
+
+---
+
+## 七、经验总结
 
 ### 关键设计原则
 

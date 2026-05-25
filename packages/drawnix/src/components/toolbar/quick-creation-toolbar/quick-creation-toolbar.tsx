@@ -235,8 +235,32 @@ export const QuickCreationToolbar: React.FC<QuickCreationToolbarProps> = ({
     }
   };
 
+  /**
+   * 预加载图片真实尺寸（素材库图片为本地缓存，加载几乎即时）
+   * 失败时降级为 400×400 默认值，不影响主流程
+   */
+  const loadImageDimensions = (
+    url: string
+  ): Promise<{ width: number; height: number }> =>
+    new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight });
+      img.onerror = () => resolve({ width: 400, height: 400 });
+      img.src = url;
+    });
+
   const handleInsertMultipleAssets = async (assets: Asset[]) => {
     if (assets.length === 0) return;
+
+    // 预加载所有图片的真实尺寸，供排位系统使用
+    const imageDimensionsMap = new Map<string, { width: number; height: number }>();
+    const imageAssets = assets.filter((a) => a.type === AssetType.IMAGE);
+    if (imageAssets.length > 0) {
+      const results = await Promise.all(
+        imageAssets.map((a) => loadImageDimensions(a.url))
+      );
+      imageAssets.forEach((a, i) => imageDimensionsMap.set(a.url, results[i]));
+    }
 
     logCanvasInsertionDebug('[CanvasInsertion][Toolbar] batch assets begin', {
       source: 'quick-creation-toolbar',
@@ -249,7 +273,11 @@ export const QuickCreationToolbar: React.FC<QuickCreationToolbarProps> = ({
     const insertionResult = await executeCanvasInsertion({
       items: assets.map((asset) => {
         if (asset.type === AssetType.IMAGE) {
-          return { type: 'image' as const, content: asset.url };
+          return {
+            type: 'image' as const,
+            content: asset.url,
+            dimensions: imageDimensionsMap.get(asset.url),
+          };
         }
 
         if (asset.type === AssetType.VIDEO) {
