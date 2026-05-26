@@ -46,7 +46,7 @@ import { insertImageFromUrl } from '../../../data/image';
 import { insertVideoFromUrl } from '../../../data/video';
 import { insertAudioFromUrl } from '../../../data/audio';
 import { executeCanvasInsertion } from '../../../services/canvas-operations';
-import { logCanvasInsertionDebug } from '../../../utils/canvas-insertion-layout';
+import { logCanvasInsertionDebug, calculateImageDisplayDimensions, CANVAS_INSERTION_LAYOUT } from '../../../utils/canvas-insertion-layout';
 import { MessagePlugin } from 'tdesign-react';
 import './quick-creation-toolbar.scss';
 
@@ -235,8 +235,39 @@ export const QuickCreationToolbar: React.FC<QuickCreationToolbarProps> = ({
     }
   };
 
+  /**
+   * 预加载图片并计算合理的显示尺寸（素材库图片为本地缓存，加载几乎即时）
+   * 使用与 buildImage 一致的缩放逻辑，确保网格布局正确
+   */
+  const loadImageDimensions = (
+    url: string
+  ): Promise<{ width: number; height: number }> =>
+    new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const dimensions = calculateImageDisplayDimensions(
+          img.naturalWidth, 
+          img.naturalHeight,
+          CANVAS_INSERTION_LAYOUT.MEDIA_MAX_SIZE
+        );
+        resolve(dimensions);
+      };
+      img.onerror = () => resolve({ width: 400, height: 400 });
+      img.src = url;
+    });
+
   const handleInsertMultipleAssets = async (assets: Asset[]) => {
     if (assets.length === 0) return;
+
+    // 预加载所有图片的真实尺寸，供排位系统使用
+    const imageDimensionsMap = new Map<string, { width: number; height: number }>();
+    const imageAssets = assets.filter((a) => a.type === AssetType.IMAGE);
+    if (imageAssets.length > 0) {
+      const results = await Promise.all(
+        imageAssets.map((a) => loadImageDimensions(a.url))
+      );
+      imageAssets.forEach((a, i) => imageDimensionsMap.set(a.url, results[i]));
+    }
 
     logCanvasInsertionDebug('[CanvasInsertion][Toolbar] batch assets begin', {
       source: 'quick-creation-toolbar',
@@ -249,7 +280,11 @@ export const QuickCreationToolbar: React.FC<QuickCreationToolbarProps> = ({
     const insertionResult = await executeCanvasInsertion({
       items: assets.map((asset) => {
         if (asset.type === AssetType.IMAGE) {
-          return { type: 'image' as const, content: asset.url };
+          return {
+            type: 'image' as const,
+            content: asset.url,
+            dimensions: imageDimensionsMap.get(asset.url),
+          };
         }
 
         if (asset.type === AssetType.VIDEO) {
@@ -270,6 +305,9 @@ export const QuickCreationToolbar: React.FC<QuickCreationToolbarProps> = ({
           },
         };
       }),
+      // 素材库批量插入时使用更大的间隔，让图片之间更清晰
+      horizontalGap: 30,
+      verticalGap: 40,
     });
 
     if (insertionResult.success) {

@@ -23,7 +23,6 @@ import { insertCardsToCanvas } from '../../utils/insert-cards';
 import { insertMediaIntoSelectedFrame } from '../../utils/frame-insertion-utils';
 import {
   CANVAS_INSERTION_LAYOUT as LAYOUT_CONSTANTS,
-  advanceBatchInsertionFlow,
   createBatchInsertionFlowState,
   estimateCanvasTextSize,
   getBatchInsertionFlowCenter,
@@ -32,6 +31,7 @@ import {
   getViewportAwareCardWidth,
   getViewportCanvasMetrics,
   logCanvasInsertionDebug,
+  precalculateGridLayout,
 } from '../../utils/canvas-insertion-layout';
 import {
   normalizeSvg,
@@ -424,7 +424,7 @@ async function executeCanvasInsertion(params: CanvasInsertionParams): Promise<MC
       horizontalGap,
     });
 
-    let flowState = createBatchInsertionFlowState(board, startPoint, {
+    const flowState = createBatchInsertionFlowState(board, startPoint, {
       horizontalGap,
       verticalGap,
     });
@@ -434,29 +434,35 @@ async function executeCanvasInsertion(params: CanvasInsertionParams): Promise<MC
       rowRightLimit: flowState.rowRightLimit,
       zoom: viewportMetrics.zoom,
     });
+
+    // 预计算所有素材的尺寸
+    const estimatedSizes = items.map((item) =>
+      estimateInsertionItemSize(board, item)
+    );
+
+    // 使用网格布局预计算所有位置，确保不同比例的素材间距均匀、不叠加
+    const gridLayout = precalculateGridLayout(startPoint, estimatedSizes, {
+      canvasWidth: viewportMetrics.width,
+      horizontalGap,
+      verticalGap,
+    });
+    flowState.bounds = gridLayout.bounds;
+
     const insertedItems: { type: ContentType; point: Point }[] = [];
 
     for (const [index, item] of items.entries()) {
-      const estimatedSize = estimateInsertionItemSize(board, item);
-      const layout = advanceBatchInsertionFlow(
-        flowState,
-        estimatedSize
-      );
-      flowState = layout.state;
+      const point = gridLayout.positions[index];
+
       logCanvasInsertionDebug('[CanvasInsertion][MCP] item layout', {
         index,
         type: item.type,
         groupId: item.groupId || null,
-        estimatedSize,
-        point: layout.point,
-        wrapped: layout.wrapped,
-        cursorX: flowState.cursorX,
-        cursorY: flowState.cursorY,
-        rowMaxHeight: flowState.rowMaxHeight,
-        bounds: flowState.bounds,
+        estimatedSize: estimatedSizes[index],
+        point,
       });
-      await insertItemToCanvas(board, item, layout.point);
-      insertedItems.push({ type: item.type, point: layout.point });
+
+      await insertItemToCanvas(board, item, point);
+      insertedItems.push({ type: item.type, point });
     }
 
     // console.log('[CanvasInsertion] Successfully inserted', insertedItems.length, 'items');
