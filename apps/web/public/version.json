@@ -1,11 +1,9 @@
 {
-  "version": "0.9.11",
-  "buildTime": "2026-05-23T03:50:46.518Z",
+  "version": "1.0.0",
+  "buildTime": "2026-05-26T03:31:58.589Z",
   "gitCommit": "unknown",
   "changelog": [
-    "修复图片生成比例错误和 API 参数兼容性问题 | 修复 buildImageRequestBody 中 size 为比例格式时未转换像素尺寸(所有非1:1比例都生成1:1) | 移除 response_format url 参数(rix API 不支持) | 修复 lockReferenceDimensions 导致非正方形图片被压缩",
-    "补修 MCP 路径 lockReferenceDimensions=true，更新完整审计文档",
-    "新增 omni-flash 视频模型支持",
-    "修复 MJ 运行时模型参数与调度路由"
+    "修复图片尺寸相关问题（真实尺寸更新、批量插入叠加）",
+    "统一图片尺寸计算机制，修复批量插入叠加问题"
   ]
 }

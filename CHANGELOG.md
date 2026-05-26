@@ -1,3 +1,14 @@
+## 1.0.0 (2026-05-26)
+
+### 🩹 Fixes
+
+- 统一图片尺寸计算机制，修复批量插入叠加问题 ([6c166910](https://github.com/ljquan/aitu/commit/6c166910))
+- 修复图片尺寸相关问题（真实尺寸更新、批量插入叠加） ([b04cfc27](https://github.com/ljquan/aitu/commit/b04cfc27))
+
+### ❤️  Thank You
+
+- 李泓震 <15900797+AiW520@user.noreply.gitee.com>
+
 ## 0.9.11 (2026-05-23)
 
 ### 🚀 Features

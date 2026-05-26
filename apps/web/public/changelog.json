@@ -1,6 +1,20 @@
 {
   "versions": [
     {
+      "version": "1.0.0",
+      "date": "2026-05-26",
+      "changes": {
+        "features": [],
+        "fixes": [
+          "统一图片尺寸计算机制，修复批量插入叠加问题",
+          "修复图片尺寸相关问题（真实尺寸更新、批量插入叠加）"
+        ],
+        "improvements": []
+      },
+      "type": "major",
+      "highlights": "统一图片尺寸计算机制，修复批量插入叠加问题"
+    },
+    {
       "version": "0.9.11",
       "date": "2026-05-23",
       "changes": {
@@ -795,19 +809,6 @@
       "date": "2026-04-23",
       "type": "patch",
       "highlights": "构建修复与稳定性改进"
-    },
-    {
-      "version": "0.6.54",
-      "date": "2026-04-22",
-      "changes": {
-        "features": [],
-        "fixes": [
-          "修正首屏资源 CDN 回退路径归一化"
-        ],
-        "improvements": []
-      },
-      "type": "patch",
-      "highlights": "修正首屏资源 CDN 回退路径归一化"
     }
   ]
 }
