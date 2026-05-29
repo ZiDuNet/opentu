@@ -352,6 +352,239 @@ function verifyGridConfig(
   return true;
 }
 
+interface HardSeamStats {
+  mean: number;
+  strongRatio: number;
+}
+
+interface HardSeamGridConfig {
+  rows: number;
+  cols: number;
+  minMean?: number;
+  minStrongRatio?: number;
+  score?: number;
+}
+
+const HARD_SEAM_GRID_CONFIGS = [
+  { rows: 2, cols: 2 },
+  { rows: 2, cols: 3 },
+  { rows: 3, cols: 2 },
+  { rows: 2, cols: 4, minMean: 42, minStrongRatio: 0.4 },
+  { rows: 4, cols: 2, minMean: 42, minStrongRatio: 0.4 },
+  { rows: 3, cols: 3, minMean: 48, minStrongRatio: 0.46 },
+];
+
+function isReasonableHardSeamGrid(
+  width: number,
+  height: number,
+  rows: number,
+  cols: number
+): boolean {
+  const cellWidth = width / cols;
+  const cellHeight = height / rows;
+  const cellAspectRatio = cellWidth / cellHeight;
+
+  return cellAspectRatio >= 0.72 && cellAspectRatio <= 1.4;
+}
+
+function getColorDistance(
+  data: Uint8ClampedArray,
+  leftIdx: number,
+  rightIdx: number
+): number {
+  const dr = data[leftIdx] - data[rightIdx];
+  const dg = data[leftIdx + 1] - data[rightIdx + 1];
+  const db = data[leftIdx + 2] - data[rightIdx + 2];
+  return Math.sqrt(dr * dr + dg * dg + db * db);
+}
+
+function getVerticalHardSeamStats(
+  imageData: ImageData,
+  x: number
+): HardSeamStats {
+  const { width, height, data } = imageData;
+  if (x <= 0 || x >= width) {
+    return { mean: 0, strongRatio: 0 };
+  }
+
+  const yStart = Math.floor(height * 0.03);
+  const yEnd = Math.ceil(height * 0.97);
+  const step = Math.max(1, Math.floor(height / 900));
+  let total = 0;
+  let strong = 0;
+  let count = 0;
+
+  for (let y = yStart; y < yEnd; y += step) {
+    const leftIdx = (y * width + x - 1) * 4;
+    const rightIdx = (y * width + x) * 4;
+    const distance = getColorDistance(data, leftIdx, rightIdx);
+    total += distance;
+    if (distance >= 42) {
+      strong++;
+    }
+    count++;
+  }
+
+  return count > 0
+    ? { mean: total / count, strongRatio: strong / count }
+    : { mean: 0, strongRatio: 0 };
+}
+
+function getHorizontalHardSeamStats(
+  imageData: ImageData,
+  y: number
+): HardSeamStats {
+  const { width, height, data } = imageData;
+  if (y <= 0 || y >= height) {
+    return { mean: 0, strongRatio: 0 };
+  }
+
+  const xStart = Math.floor(width * 0.03);
+  const xEnd = Math.ceil(width * 0.97);
+  const step = Math.max(1, Math.floor(width / 900));
+  let total = 0;
+  let strong = 0;
+  let count = 0;
+
+  for (let x = xStart; x < xEnd; x += step) {
+    const topIdx = ((y - 1) * width + x) * 4;
+    const bottomIdx = (y * width + x) * 4;
+    const distance = getColorDistance(data, topIdx, bottomIdx);
+    total += distance;
+    if (distance >= 42) {
+      strong++;
+    }
+    count++;
+  }
+
+  return count > 0
+    ? { mean: total / count, strongRatio: strong / count }
+    : { mean: 0, strongRatio: 0 };
+}
+
+function isHardSeam(
+  stats: HardSeamStats,
+  config?: Pick<HardSeamGridConfig, 'minMean' | 'minStrongRatio'>
+): boolean {
+  if (
+    config?.minMean !== undefined &&
+    config?.minStrongRatio !== undefined
+  ) {
+    return (
+      stats.mean >= config.minMean &&
+      stats.strongRatio >= config.minStrongRatio
+    );
+  }
+
+  return (
+    (stats.strongRatio >= 0.42 && stats.mean >= 34) ||
+    (stats.strongRatio >= 0.32 && stats.mean >= 48)
+  );
+}
+
+function getBestVerticalHardSeamStats(
+  imageData: ImageData,
+  expectedX: number
+): HardSeamStats {
+  const tolerance = Math.max(4, Math.floor(imageData.width * 0.006));
+  let best: HardSeamStats = { mean: 0, strongRatio: 0 };
+
+  for (let x = expectedX - tolerance; x <= expectedX + tolerance; x++) {
+    const stats = getVerticalHardSeamStats(imageData, x);
+    if (stats.mean * stats.strongRatio > best.mean * best.strongRatio) {
+      best = stats;
+    }
+  }
+
+  return best;
+}
+
+function getBestHorizontalHardSeamStats(
+  imageData: ImageData,
+  expectedY: number
+): HardSeamStats {
+  const tolerance = Math.max(4, Math.floor(imageData.height * 0.006));
+  let best: HardSeamStats = { mean: 0, strongRatio: 0 };
+
+  for (let y = expectedY - tolerance; y <= expectedY + tolerance; y++) {
+    const stats = getHorizontalHardSeamStats(imageData, y);
+    if (stats.mean * stats.strongRatio > best.mean * best.strongRatio) {
+      best = stats;
+    }
+  }
+
+  return best;
+}
+
+/**
+ * 检测无留白拼接图的硬边界。
+ *
+ * 一些模型会输出没有白色/透明分割线的拼图，图片之间只有突变的像素边界。
+ * 这里作为兜底，只在常见宫格位置存在贯穿式强边界时启用。
+ */
+function detectHardSeamGridFromImage(
+  imageData: ImageData,
+  width: number,
+  height: number
+): HardSeamGridConfig | null {
+  let bestConfig: HardSeamGridConfig | null = null;
+
+  for (const config of HARD_SEAM_GRID_CONFIGS) {
+    if (!isReasonableHardSeamGrid(width, height, config.rows, config.cols)) {
+      continue;
+    }
+
+    const cellWidth = width / config.cols;
+    const cellHeight = height / config.rows;
+    const seamStats: HardSeamStats[] = [];
+    let valid = true;
+
+    for (let col = 1; col < config.cols; col++) {
+      const stats = getBestVerticalHardSeamStats(
+        imageData,
+        Math.round(col * cellWidth)
+      );
+      if (!isHardSeam(stats, config)) {
+        valid = false;
+        break;
+      }
+      seamStats.push(stats);
+    }
+
+    if (!valid) {
+      continue;
+    }
+
+    for (let row = 1; row < config.rows; row++) {
+      const stats = getBestHorizontalHardSeamStats(
+        imageData,
+        Math.round(row * cellHeight)
+      );
+      if (!isHardSeam(stats, config)) {
+        valid = false;
+        break;
+      }
+      seamStats.push(stats);
+    }
+
+    if (!valid || seamStats.length === 0) {
+      continue;
+    }
+
+    const score =
+      seamStats.reduce(
+        (sum, stats) => sum + stats.mean * stats.strongRatio,
+        0
+      ) / seamStats.length;
+
+    if (!bestConfig || score > (bestConfig.score ?? 0)) {
+      bestConfig = { ...config, score };
+    }
+  }
+
+  return bestConfig;
+}
+
 /**
  * 验证分割线是否有足够的宽度（连续多行/列都是白色）
  * @param lines - 检测到的分割线位置
@@ -542,6 +775,37 @@ async function detectGridLinesInternal(
         cols: standardGrid.cols,
         rowLines: standardRowLines,
         colLines: standardColLines,
+      },
+      img,
+      imageData,
+      canvas,
+      hasTransparency: hasAlpha,
+    };
+  }
+
+  const hardSeamGrid = hasAlpha
+    ? null
+    : detectHardSeamGridFromImage(imageData, width, height);
+
+  if (hardSeamGrid) {
+    const cellWidth = width / hardSeamGrid.cols;
+    const cellHeight = height / hardSeamGrid.rows;
+    const hardSeamRowLines: number[] = [];
+    const hardSeamColLines: number[] = [];
+
+    for (let i = 1; i < hardSeamGrid.rows; i++) {
+      hardSeamRowLines.push(Math.round(i * cellHeight));
+    }
+    for (let i = 1; i < hardSeamGrid.cols; i++) {
+      hardSeamColLines.push(Math.round(i * cellWidth));
+    }
+
+    return {
+      detection: {
+        rows: hardSeamGrid.rows,
+        cols: hardSeamGrid.cols,
+        rowLines: hardSeamRowLines,
+        colLines: hardSeamColLines,
       },
       img,
       imageData,
