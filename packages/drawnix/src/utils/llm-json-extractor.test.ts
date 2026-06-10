@@ -5,9 +5,19 @@ import {
   extractJsonObject,
   extractJsonSource,
   extractJsonValue,
+  normalizeLlmTextContent,
 } from './llm-json-extractor';
 
 describe('llm-json-extractor', () => {
+  it('normalizes text content arrays from chat completion responses', () => {
+    expect(
+      normalizeLlmTextContent([
+        { type: 'text', text: '{"title":"漫画"' },
+        { type: 'text', text: ',"pages":[]}' },
+      ])
+    ).toBe('{"title":"漫画"\n,"pages":[]}');
+  });
+
   it('skips mismatched JSON in think blocks with a predicate', () => {
     const result = extractJsonObject<{ shots: unknown[] }>(
       `<think>**Considering c** {"draft": true, "shots": "not array"}</think>

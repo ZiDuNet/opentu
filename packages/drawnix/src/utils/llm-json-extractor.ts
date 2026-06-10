@@ -50,24 +50,26 @@ function collectString(value: unknown, output: string[]): void {
   }
 }
 
-function collectTextFromContentParts(value: unknown, output: string[]): void {
+export function normalizeLlmTextContent(value: unknown): string {
   if (typeof value === 'string') {
-    collectString(value, output);
-    return;
+    return value;
   }
 
-  if (!Array.isArray(value)) return;
+  if (!Array.isArray(value)) return '';
 
-  for (const part of value) {
-    if (typeof part === 'string') {
-      collectString(part, output);
-      continue;
-    }
+  return value
+    .map((part) => {
+      if (typeof part === 'string') return part;
+      if (!part || typeof part !== 'object') return '';
+      const text = (part as { text?: unknown }).text;
+      return typeof text === 'string' ? text : '';
+    })
+    .filter(Boolean)
+    .join('\n');
+}
 
-    const item = part as { text?: unknown; type?: unknown } | null;
-    if (!item || typeof item !== 'object') continue;
-    collectString(item.text, output);
-  }
+function collectTextFromContentParts(value: unknown, output: string[]): void {
+  collectString(normalizeLlmTextContent(value), output);
 }
 
 function collectKnownLlmPayloads(value: unknown): string[] {
