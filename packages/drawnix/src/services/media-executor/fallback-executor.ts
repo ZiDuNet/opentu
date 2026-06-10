@@ -72,6 +72,7 @@ import {
   resolveLegacyTaskInvocationRouteModel,
   shouldUseStrictTaskInvocationRoute,
 } from '../task-invocation-route';
+import { normalizeLlmTextContent } from '../../utils/llm-json-extractor';
 
 function inferAuthTypeFromRoute(
   route: ReturnType<typeof resolveInvocationRoute>
@@ -98,6 +99,67 @@ function buildProviderContext(config: {
       extraHeaders: config.extraHeaders,
     }
   );
+}
+
+async function readResponseTextPreview(
+  response: Response,
+  limit = 1000
+): Promise<string> {
+  if (!response.body) {
+    try {
+      return (await response.clone().text()).slice(0, limit);
+    } catch {
+      return '';
+    }
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let text = '';
+
+  try {
+    while (text.length < limit) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      text += decoder.decode(value, { stream: true });
+    }
+    text += decoder.decode();
+    if (text.length >= limit) {
+      await reader.cancel().catch(() => undefined);
+    }
+  } catch {
+    await reader.cancel().catch(() => undefined);
+  }
+
+  return text.slice(0, limit);
+}
+
+function extractProviderErrorMessage(rawText: string): string {
+  const trimmed = rawText.trim();
+  if (!trimmed) return '';
+
+  try {
+    const parsed = JSON.parse(trimmed) as {
+      message?: string;
+      detail?: string;
+      error?:
+        | string
+        | {
+            message?: string;
+            details?: string;
+          };
+    };
+    if (typeof parsed.error === 'string') return parsed.error;
+    return (
+      parsed.error?.message ||
+      parsed.error?.details ||
+      parsed.message ||
+      parsed.detail ||
+      ''
+    ).trim();
+  } catch {
+    return trimmed.replace(/\s+/g, ' ');
+  }
 }
 
 /** 从 uploadedImages 提取 URL 列表，与 SW ImageHandler 逻辑一致 */
@@ -870,7 +932,9 @@ export class FallbackMediaExecutor implements IMediaExecutor {
 
       options?.onProgress?.({ progress: 80 });
 
-      const fullResponse = data.choices?.[0]?.message?.content || '';
+      const fullResponse = normalizeLlmTextContent(
+        data.choices?.[0]?.message?.content
+      );
       const elapsedTime = Date.now() - startTime;
 
       // 记录成功
@@ -1021,6 +1085,12 @@ export class FallbackMediaExecutor implements IMediaExecutor {
                 ...(toNumber(extraParams?.max_tokens) !== undefined
                   ? { maxOutputTokens: toNumber(extraParams?.max_tokens) }
                   : {}),
+                ...(typeof extraParams?.response_mime_type === 'string' &&
+                extraParams.response_mime_type.trim()
+                  ? {
+                      responseMimeType: extraParams.response_mime_type.trim(),
+                    }
+                  : {}),
               },
             })
           : await providerTransport
@@ -1043,21 +1113,30 @@ export class FallbackMediaExecutor implements IMediaExecutor {
                   ...(toNumber(extraParams?.max_tokens) !== undefined
                     ? { max_tokens: toNumber(extraParams?.max_tokens) }
                     : {}),
+                  ...(typeof extraParams?.response_format === 'object'
+                    ? { response_format: extraParams.response_format }
+                    : {}),
                 }),
                 signal: options?.signal,
               })
               .then(async (response) => {
                 if (!response.ok) {
+                  const rawError = await readResponseTextPreview(response);
+                  const providerMessage = extractProviderErrorMessage(rawError);
                   throw new Error(
                     `HTTP ${response.status}: ${
-                      response.statusText || 'Text generation failed'
+                      providerMessage ||
+                      response.statusText ||
+                      'Text generation failed'
                     }`
                   );
                 }
                 return response.json();
               });
 
-      const fullResponse = data.choices?.[0]?.message?.content || '';
+      const fullResponse = normalizeLlmTextContent(
+        data.choices?.[0]?.message?.content
+      );
       options?.onProgress?.({ progress: 100 });
       if (taskId) {
         await taskStorageWriter.completeTask(taskId, {
