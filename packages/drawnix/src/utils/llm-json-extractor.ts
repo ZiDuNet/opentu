@@ -50,9 +50,30 @@ function collectString(value: unknown, output: string[]): void {
   }
 }
 
+function collectTextFromContentParts(value: unknown, output: string[]): void {
+  if (typeof value === 'string') {
+    collectString(value, output);
+    return;
+  }
+
+  if (!Array.isArray(value)) return;
+
+  for (const part of value) {
+    if (typeof part === 'string') {
+      collectString(part, output);
+      continue;
+    }
+
+    const item = part as { text?: unknown; type?: unknown } | null;
+    if (!item || typeof item !== 'object') continue;
+    collectString(item.text, output);
+  }
+}
+
 function collectKnownLlmPayloads(value: unknown): string[] {
   const output: string[] = [];
   const root = value as {
+    candidates?: unknown;
     choices?: unknown;
     output_text?: unknown;
     text?: unknown;
@@ -64,6 +85,16 @@ function collectKnownLlmPayloads(value: unknown): string[] {
   collectString(root.output_text, output);
   collectString(root.text, output);
   collectString(root.content, output);
+  collectTextFromContentParts(root.content, output);
+
+  if (Array.isArray(root.candidates)) {
+    for (const candidate of root.candidates) {
+      const item = candidate as {
+        content?: { parts?: unknown };
+      } | null;
+      collectTextFromContentParts(item?.content?.parts, output);
+    }
+  }
 
   if (Array.isArray(root.choices)) {
     for (const choice of root.choices) {
@@ -76,6 +107,8 @@ function collectKnownLlmPayloads(value: unknown): string[] {
       collectString(item.message?.content, output);
       collectString(item.delta?.content, output);
       collectString(item.text, output);
+      collectTextFromContentParts(item.message?.content, output);
+      collectTextFromContentParts(item.delta?.content, output);
     }
   }
 
@@ -121,7 +154,7 @@ function buildJsonSearchSources(text: string): string[] {
   const envelopePayloads = collectEnvelopePayloadSources(directSources);
 
   return uniqueSources([
-    ...envelopePayloads.flatMap(payload => [
+    ...envelopePayloads.flatMap((payload) => [
       ...getFenceContents(payload),
       payload,
     ]),

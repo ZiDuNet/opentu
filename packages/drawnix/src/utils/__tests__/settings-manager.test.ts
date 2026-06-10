@@ -330,6 +330,86 @@ describe('settings-manager', () => {
     });
   });
 
+  it('migrates legacy default image model only once', async () => {
+    mockSettingsManagerDeps();
+
+    localStorage.setItem(
+      DRAWNIX_SETTINGS_KEY,
+      JSON.stringify({
+        gemini: {
+          apiKey: 'legacy-key',
+          baseUrl: 'https://api.tu-zi.com/v1',
+          imageModelName: 'gpt-image-2-vip',
+        },
+        invocationPresets: [
+          {
+            id: 'default',
+            name: '默认方案',
+            isDefault: true,
+            text: {
+              defaultModelRef: {
+                profileId: 'legacy-default',
+                modelId: 'gemini-2.5-pro-all',
+              },
+            },
+            audio: {
+              defaultModelRef: {
+                profileId: 'legacy-default',
+                modelId: 'suno_music',
+              },
+            },
+            image: {
+              defaultModelRef: {
+                profileId: 'legacy-default',
+                modelId: 'gpt-image-2-vip',
+              },
+            },
+            video: {
+              defaultModelRef: {
+                profileId: 'legacy-default',
+                modelId: 'seedance-1.5-pro',
+              },
+            },
+          },
+        ],
+      })
+    );
+
+    const { settingsManager } = await import('../settings-manager');
+    const settings = settingsManager.getSettings();
+
+    expect(settings.gemini.imageModelName).toBe('gpt-image-2');
+    expect(settings.invocationPresets[0]?.image.defaultModelRef).toMatchObject({
+      profileId: 'legacy-default',
+      modelId: 'gpt-image-2',
+    });
+    expect(settings.migrations).toMatchObject({
+      legacyDefaultImageModelV1: true,
+    });
+
+    await settingsManager.updateActiveInvocationRouteModel('image', {
+      profileId: 'legacy-default',
+      modelId: 'gpt-image-2-vip',
+    });
+
+    vi.resetModules();
+    mockSettingsManagerDeps();
+
+    const reloaded = await import('../settings-manager');
+    const reloadedSettings = reloaded.settingsManager.getSettings();
+
+    expect(reloadedSettings.gemini.imageModelName).toBe('gpt-image-2-vip');
+    expect(
+      reloadedSettings.invocationPresets[0]?.image.defaultModelRef
+    ).toMatchObject({
+      profileId: 'legacy-default',
+      modelId: 'gpt-image-2-vip',
+    });
+    expect(reloadedSettings.migrations).toMatchObject({
+      legacyDefaultImageModelV1: true,
+    });
+  });
+
   it('does not migrate legacy default compatibility when the default baseUrl is not Tuzi', async () => {
     mockSettingsManagerDeps();
 

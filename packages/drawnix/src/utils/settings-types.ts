@@ -82,6 +82,7 @@ export interface InvocationPreset {
 
 export interface SettingsMigrations {
   legacyDefaultImageApiCompatibilityV1?: boolean;
+  legacyDefaultImageModelV1?: boolean;
 }
 
 export interface TtsSettings {

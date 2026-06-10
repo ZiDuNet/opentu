@@ -66,6 +66,52 @@ describe('llm-json-extractor', () => {
     expect(result.shots).toEqual([{ id: 'shot_1' }]);
   });
 
+  it('extracts JSON from google generateContent candidate envelopes', () => {
+    const result = extractJsonObject<{ pages: unknown[] }>(
+      JSON.stringify({
+        candidates: [
+          {
+            content: {
+              parts: [
+                {
+                  text: JSON.stringify({
+                    title: '深圳文旅',
+                    pages: [{ title: '封面' }],
+                  }),
+                },
+              ],
+            },
+          },
+        ],
+      }),
+      (value) => Array.isArray((value as { pages?: unknown }).pages)
+    );
+
+    expect(result.pages).toEqual([{ title: '封面' }]);
+  });
+
+  it('extracts JSON from array message content envelopes', () => {
+    const result = extractJsonObject<{ pages: unknown[] }>(
+      JSON.stringify({
+        choices: [
+          {
+            message: {
+              content: [
+                {
+                  type: 'text',
+                  text: '{"title":"深圳文旅","pages":[{"title":"封面"}]}',
+                },
+              ],
+            },
+          },
+        ],
+      }),
+      (value) => Array.isArray((value as { pages?: unknown }).pages)
+    );
+
+    expect(result.pages).toEqual([{ title: '封面' }]);
+  });
+
   it('keeps brackets inside JSON strings from breaking balance', () => {
     const result = extractJsonObject<{ text: string }>(
       'prefix {"text":"literal { brace } and [ bracket ]"} suffix'
@@ -99,8 +145,10 @@ describe('llm-json-extractor', () => {
   });
 
   it('keeps truncated JSON as a failure', () => {
-    expect(() => extractJsonValue('前缀 {"title":"未完成"', {
-      kinds: ['object'],
-    })).toThrow('响应中未找到有效 JSON');
+    expect(() =>
+      extractJsonValue('前缀 {"title":"未完成"', {
+        kinds: ['object'],
+      })
+    ).toThrow('响应中未找到有效 JSON');
   });
 });
