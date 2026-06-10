@@ -39,8 +39,19 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       # lint、test、build
-      - run: npx nx affected -t test build --base=origin/develop --verbose
-      - run: npx nx affected -t lint --exclude=drawnix --base=origin/develop --verbose
+      - name: Resolve affected base
+        id: affected-base
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "base=origin/${{ github.base_ref }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "base=origin/develop" >> "$GITHUB_OUTPUT"
+          fi
+      - run: npx nx affected -t test build --base=${{ steps.affected-base.outputs.base }} --verbose
+      - run: npx nx affected -t lint --exclude=drawnix --base=${{ steps.affected-base.outputs.base }} --verbose
+      - name: Verify startup bundle
+        run: pnpm verify:startup
 
       # PR 时运行冒烟测试（快速，约2分钟）
       - name: Run Smoke Tests
