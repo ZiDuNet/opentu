@@ -1,0 +1,11 @@
+name: opentu
+
+services:
+  web:
+    image: opentu-web:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "${OPENTU_WEB_PORT:-7200}:80"
+    restart: unless-stopped
