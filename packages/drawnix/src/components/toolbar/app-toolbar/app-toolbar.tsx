@@ -14,7 +14,7 @@ import {
 import { Island } from '../../island';
 import { Popover, PopoverContent, PopoverTrigger } from '../../popover/popover';
 import { useState } from 'react';
-import { CleanBoard, OpenFile, SaveAsImage, SaveToFile, Settings, BackupRestore, CloudSync, DebugPanel, QuickCommands, UserManual, VersionInfo, CleanInvalidLinks } from './app-menu-items';
+import { CleanBoard, OpenFile, SaveAsImage, SaveToFile, Settings, BackupRestore, CloudSync, DebugPanel, QuickCommands, UserManual, VersionInfo, CleanInvalidLinks, ResetAllData } from './app-menu-items';
 import { LanguageSwitcherMenu } from './language-switcher-menu';
 import Menu from '../../menu/menu';
 import MenuSeparator from '../../menu/menu-separator';
@@ -71,6 +71,7 @@ export const AppToolbar: React.FC<AppToolbarProps> = ({
               tooltip={appMenuOpen ? undefined : t('general.menu')}
               tooltipPlacement={embedded ? 'right' : 'bottom'}
               aria-label={t('general.menu')}
+              showAriaLabel={!iconMode}
               data-track="toolbar_click_menu"
               onPointerDown={() => {
                 setAppMenuOpen(!appMenuOpen);
@@ -103,6 +104,7 @@ export const AppToolbar: React.FC<AppToolbarProps> = ({
                 onOpenCloudSync?.();
               }} />
               <Settings />
+              <ResetAllData />
               <MenuSeparator />
               <QuickCommands />
               <UserManual />
@@ -124,6 +126,7 @@ export const AppToolbar: React.FC<AppToolbarProps> = ({
               tooltip={t('general.undo')}
               tooltipPlacement={embedded ? 'right' : 'bottom'}
               aria-label={t('general.undo')}
+              showAriaLabel={!iconMode}
               data-track="toolbar_click_undo"
               onPointerUp={() => {
                 board.undo();
@@ -146,6 +149,7 @@ export const AppToolbar: React.FC<AppToolbarProps> = ({
               tooltip={t('general.redo')}
               tooltipPlacement={embedded ? 'right' : 'bottom'}
               aria-label={t('general.redo')}
+              showAriaLabel={!iconMode}
               data-track="toolbar_click_redo"
               onPointerUp={() => {
                 board.redo();

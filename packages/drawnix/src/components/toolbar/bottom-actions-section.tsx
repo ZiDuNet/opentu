@@ -55,6 +55,7 @@ export interface BottomActionsSectionProps {
   taskPanelExpanded: boolean;
   /** 任务面板切换回调 */
   onTaskPanelToggle: () => void;
+  iconMode?: boolean;
 }
 
 export const BottomActionsSection: React.FC<BottomActionsSectionProps> = ({
@@ -64,6 +65,7 @@ export const BottomActionsSection: React.FC<BottomActionsSectionProps> = ({
   onToolboxDrawerToggle,
   taskPanelExpanded,
   onTaskPanelToggle,
+  iconMode = false,
 }) => {
   const { activeTasks, completedTasks, failedTasks } = useTaskQueue();
   const [acknowledgedFailedAt, setAcknowledgedFailedAt] = useState(
@@ -108,6 +110,7 @@ export const BottomActionsSection: React.FC<BottomActionsSectionProps> = ({
         aria-label={projectDrawerOpen ? '关闭项目' : '打开项目'}
         tooltip={projectDrawerOpen ? '关闭项目' : '打开项目'}
         tooltipPlacement="right"
+        showAriaLabel={!iconMode}
         selected={projectDrawerOpen}
         visible={true}
         data-track="toolbar_click_project_drawer"
@@ -126,6 +129,7 @@ export const BottomActionsSection: React.FC<BottomActionsSectionProps> = ({
           aria-label={toolboxDrawerOpen ? '关闭工具箱' : '打开工具箱'}
           tooltip={toolboxDrawerOpen ? '关闭工具箱' : '打开工具箱'}
           tooltipPlacement="right"
+          showAriaLabel={!iconMode}
           selected={toolboxDrawerOpen}
           visible={true}
           data-track="toolbar_click_toolbox"
@@ -150,6 +154,7 @@ export const BottomActionsSection: React.FC<BottomActionsSectionProps> = ({
             aria-label="任务队列"
             tooltip={taskTooltip}
             tooltipPlacement="right"
+            showAriaLabel={!iconMode}
             selected={taskPanelExpanded}
             visible={true}
             data-track="toolbar_click_tasks"

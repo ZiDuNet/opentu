@@ -64,6 +64,12 @@ type ToolButtonProps =
       onChange?(data: { pointerType: EventPointerType | null }): void;
     });
 
+function getVisibleLabel(label: string) {
+  return label
+    .replace(/\s*(?:\u2014|\u2013)\s*.*/, '')
+    .replace(/\s+-\s+.*/, '');
+}
+
 export const ToolButton = React.forwardRef((props: ToolButtonProps, ref) => {
   const { id: drawnixId } = { id: 'drawnix' };
   const innerRef = React.useRef(null);
@@ -162,7 +168,9 @@ export const ToolButton = React.forwardRef((props: ToolButtonProps, ref) => {
           </div>
         )}
         {props.showAriaLabel && (
-          <div className="tool-icon__label">{props['aria-label']}</div>
+          <div className="tool-icon__label">
+            {getVisibleLabel(props['aria-label'])}
+          </div>
         )}
         {props.children && (
           <div className="tool-icon__icon">{props.children}</div>
@@ -223,6 +231,11 @@ export const ToolButton = React.forwardRef((props: ToolButtonProps, ref) => {
           <span className="tool-icon__keybinding">{props.keyBindingLabel}</span>
         )}
       </div>
+      {props.showAriaLabel && (
+        <div className="tool-icon__label">
+          {getVisibleLabel(props['aria-label'])}
+        </div>
+      )}
     </label>
   );
 

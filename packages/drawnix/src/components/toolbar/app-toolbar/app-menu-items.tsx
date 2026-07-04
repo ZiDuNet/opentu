@@ -243,6 +243,84 @@ export const Settings = () => {
 };
 Settings.displayName = 'Settings';
 
+async function deleteIndexedDatabases() {
+  const indexedDBFactory = window.indexedDB as IDBFactory & {
+    databases?: () => Promise<Array<{ name?: string }>>;
+  };
+
+  if (!indexedDBFactory) {
+    return;
+  }
+
+  if (indexedDBFactory.databases) {
+    const databases = await indexedDBFactory.databases();
+    await Promise.all(
+      databases
+        .map((database) => database.name)
+        .filter((name): name is string => Boolean(name))
+        .map(
+          (name) =>
+            new Promise<void>((resolve) => {
+              const request = indexedDBFactory.deleteDatabase(name);
+              request.onsuccess = () => resolve();
+              request.onerror = () => resolve();
+              request.onblocked = () => resolve();
+            })
+        )
+    );
+  }
+}
+
+async function resetLocalAppData() {
+  if ('serviceWorker' in navigator) {
+    const registrations = await navigator.serviceWorker.getRegistrations();
+    await Promise.all(
+      registrations.map((registration) => registration.unregister())
+    );
+  }
+
+  if ('caches' in window) {
+    const cacheNames = await window.caches.keys();
+    await Promise.all(cacheNames.map((name) => window.caches.delete(name)));
+  }
+
+  await deleteIndexedDatabases();
+
+  window.localStorage.clear();
+  window.sessionStorage.clear();
+}
+
+export const ResetAllData = () => {
+  return (
+    <MenuItem
+      icon={<TrashIcon />}
+      data-track="toolbar_click_menu_reset_all_data"
+      onSelect={async () => {
+        const confirmed = window.confirm(
+          '\u8fd9\u5c06\u6e05\u9664\u6d4f\u89c8\u5668\u672c\u5730\u7684\u753b\u5e03\u3001\u8bbe\u7f6e\u3001\u7f13\u5b58\u548c\u79bb\u7ebf\u6570\u636e\uff0c\u5e76\u91cd\u65b0\u52a0\u8f7d\u9875\u9762\u3002\u786e\u5b9a\u7ee7\u7eed\u5417\uff1f'
+        );
+        if (!confirmed) {
+          return;
+        }
+
+        try {
+          await resetLocalAppData();
+          window.location.replace(
+            `${window.location.pathname}?reset=${Date.now()}`
+          );
+        } catch (error) {
+          console.error('[ResetAllData] Failed to clear local data:', error);
+          MessagePlugin.error('\u6e05\u9664\u5931\u8d25');
+        }
+      }}
+      aria-label="\u6e05\u9664\u6240\u6709\u6570\u636e"
+    >
+      {'\u6e05\u9664\u6240\u6709\u6570\u636e'}
+    </MenuItem>
+  );
+};
+ResetAllData.displayName = 'ResetAllData';
+
 export const QuickCommands = () => {
   const { appState, setAppState } = useDrawnix();
   const { t } = useI18n();

@@ -686,6 +686,7 @@ export const CreationToolbar: React.FC<ToolbarSectionProps> = ({
               icon={displayIcon}
               tooltip={displayTitle}
               aria-label={displayTitle}
+              showAriaLabel={!iconMode}
               data-track={`toolbar_click_${popupKey}`}
               onPointerDown={() => {
                 showPopover(popupKey);
@@ -731,6 +732,7 @@ export const CreationToolbar: React.FC<ToolbarSectionProps> = ({
         aria-label={
           button.titleKey ? t(button.titleKey as keyof Translations) : ''
         }
+        showAriaLabel={!iconMode}
         data-track={`toolbar_click_${button.pointer || button.key}`}
         onPointerDown={() => {
           if (button.pointer && !isBasicPointer(button.pointer)) {
@@ -778,6 +780,7 @@ export const CreationToolbar: React.FC<ToolbarSectionProps> = ({
               tooltip={t('zoom.out')}
               tooltipPlacement={embedded ? 'right' : 'bottom'}
               aria-label={t('zoom.out')}
+              showAriaLabel={!iconMode}
               data-track="toolbar_click_zoom_out"
               onPointerUp={() => {
                 BoardTransforms.updateZoom(board, board.viewport.zoom - 0.1);
@@ -856,6 +859,7 @@ export const CreationToolbar: React.FC<ToolbarSectionProps> = ({
               tooltip={t('zoom.in')}
               tooltipPlacement={embedded ? 'right' : 'bottom'}
               aria-label={t('zoom.in')}
+              showAriaLabel={!iconMode}
               data-track="toolbar_click_zoom_in"
               onPointerUp={() => {
                 BoardTransforms.updateZoom(board, board.viewport.zoom + 0.1);
@@ -954,7 +958,7 @@ export const CreationToolbar: React.FC<ToolbarSectionProps> = ({
             ? renderDraggableButton(buttonConfig.id, index, true, index)
             : renderButtonById(buttonConfig.id, index)
         )}
-      <MoreToolsButton embedded={embedded} />
+      <MoreToolsButton embedded={embedded} iconMode={iconMode} />
       {/* 最小化工具栏 - 显示最小化和常驻的工具图标 */}
       {embedded && minimizedToolsBarEnabled && (
         <Suspense fallback={null}>

@@ -7,16 +7,63 @@
 .bottom-actions-section {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
   gap: 4px;
   width: 100%;
+
+  .tool-icon {
+    justify-content: flex-start;
+    width: 100%;
+  }
+
+  .tool-icon__label {
+    display: block;
+    flex: 1;
+    min-width: 0;
+    margin: 0 6px 0 2px;
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.15;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .unified-toolbar--icon-only & {
+    align-items: center;
+
+    .tool-icon {
+      justify-content: center;
+      width: auto;
+    }
+
+    &__task-wrapper {
+      align-items: center;
+      justify-content: center;
+      width: auto;
+
+      .t-badge {
+        width: auto;
+      }
+    }
+
+    .tool-icon__label {
+      display: none;
+    }
+  }
 
   // 任务按钮包装器 - 添加相对定位以支持状态点
   &__task-wrapper {
     position: relative;
     display: flex;
-    align-items: center;
-    justify-content: center;
+    align-items: stretch;
+    justify-content: flex-start;
+    width: 100%;
+
+    .t-badge {
+      width: 100%;
+    }
 
     // 去除背景色 - 需要针对 button 元素本身，而不是内部的 icon div
     .tool-icon_type_button {

@@ -188,8 +188,8 @@
     display: flex;
     flex-direction: column;
     gap: 0;
-    width: fit-content;
-    max-width: 80px;
+    width: 136px;
+    max-width: 136px;
     overflow: visible; // 允许 Badge 角标溢出显示，滚动由 __scrollable 处理
     border-radius: 20px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08); // 更加柔和的阴影
@@ -323,6 +323,9 @@
 
     // 图标模式修饰符 (窗口高度不足时自动切换)
     &--icon-only {
+      width: fit-content;
+      max-width: 80px;
+
       // 隐藏工具按钮标签,仅显示图标
       .tool-icon__label {
         display: none;
@@ -520,7 +523,7 @@
     width: 100%; // 填充容器宽度
     display: flex;
     flex-direction: column;
-    align-items: center; // 让所有直接子元素（包括 GitHub 按钮）居中
+    align-items: stretch;
 
     // 调整 Island 容器
     .island {
@@ -532,7 +535,7 @@
     .stack {
       display: flex !important; // Override Grid
       flex-direction: column !important;
-      align-items: center;
+      align-items: stretch;
       gap: 4px;
       width: 100%;
     }
@@ -540,12 +543,36 @@
     // 调整工具按钮尺寸以适应窄宽度
     .tool-button,
     .tool-icon {
+      justify-content: flex-start;
       min-width: 40px;
       max-width: 100%;
-      width: auto;
+      width: 100%;
     }
 
     // 隐藏文本标签，节省空间
+    .tool-icon__label {
+      display: block;
+      flex: 1;
+      min-width: 0;
+      margin: 0 6px 0 2px;
+      font-size: 11px;
+      font-weight: 500;
+      line-height: 1.15;
+      text-align: left;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+
+  .app-toolbar--embedded.app-toolbar--icon-only,
+  .draw-toolbar--embedded.draw-toolbar--icon-only {
+    .tool-button,
+    .tool-icon {
+      justify-content: center;
+      width: auto;
+    }
+
     .tool-icon__label {
       display: none;
     }

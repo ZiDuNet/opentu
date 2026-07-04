@@ -37,7 +37,7 @@ const TOOLBAR_LEFT_STORAGE_KEY = 'aitu-toolbar-left';
 const TOOLBAR_DEFAULT_LEFT = 0;
 const TOOLBAR_MOBILE_LEFT = 8;
 const TOOLBAR_VIEWPORT_GAP = 0;
-const TOOLBAR_CONTENT_WIDTH = 58;
+const TOOLBAR_CONTENT_WIDTH = 136;
 type ToolbarDockSide = 'left' | 'right';
 
 function clampToolbarLeft(left: number, toolbarWidth = TOOLBAR_CONTENT_WIDTH) {
@@ -570,6 +570,7 @@ export const UnifiedToolbar: React.FC<UnifiedToolbarProps> = React.memo(
               onToolboxDrawerToggle={onToolboxDrawerToggle}
               taskPanelExpanded={taskPanelExpanded}
               onTaskPanelToggle={handleTaskPanelToggle}
+              iconMode={isIconMode || isMobileOrTablet}
             />
           </div>
         </Island>

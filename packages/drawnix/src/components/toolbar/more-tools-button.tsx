@@ -67,6 +67,7 @@ import { HoverTip } from '../shared/hover';
 interface MoreToolsButtonProps {
   /** 是否嵌入模式 */
   embedded?: boolean;
+  iconMode?: boolean;
 }
 
 /**
@@ -104,6 +105,7 @@ const BUTTON_META_MAP: Record<string, ButtonMeta> = {
 
 export const MoreToolsButton: React.FC<MoreToolsButtonProps> = ({
   embedded = false,
+  iconMode = false,
 }) => {
   const { t } = useI18n();
   const board = useBoard();
@@ -214,6 +216,7 @@ export const MoreToolsButton: React.FC<MoreToolsButtonProps> = ({
             tooltip={isOpen ? undefined : t('toolbar.more')}
             tooltipPlacement={embedded ? 'right' : 'bottom'}
             aria-label={t('toolbar.more')}
+            showAriaLabel={!iconMode}
             selected={isOpen}
             visible={true}
             data-testid="toolbar-more"
