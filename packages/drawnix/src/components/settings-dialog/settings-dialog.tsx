@@ -297,7 +297,10 @@ function resolveAutoImageApiCompatibilityForDisplay(
     return 'openai-gpt-image';
   }
 
-  if (normalizedBaseUrl.includes('.tu-zi.com')) {
+  if (
+    normalizedBaseUrl.includes('.tu-zi.com') ||
+    normalizedBaseUrl.includes('.leefun.top')
+  ) {
     return 'tuzi-gpt-image';
   }
 
@@ -2291,7 +2294,7 @@ export const SettingsDialog = ({
                       您可以从以下地址获取 API Key:
                       <br />
                       <a
-                        href="https://api.tu-zi.com/token"
+                        href="https://aiapi.leefun.top/token"
                         target="_blank"
                         rel="noopener noreferrer"
                         style={{
@@ -2301,7 +2304,7 @@ export const SettingsDialog = ({
                           marginBottom: 8,
                         }}
                       >
-                        api.tu-zi.com/token
+                        aiapi.leefun.top/token
                       </a>
                       <div
                         style={{

@@ -131,7 +131,7 @@ export const tuziGPTImageAdapter: ImageModelAdapter = {
   id: 'tuzi-gpt-image-adapter',
   label: 'Tuzi GPT Image',
   kind: 'image',
-  docsUrl: 'https://api.tu-zi.com',
+  docsUrl: 'https://aiapi.leefun.top',
   matchRequestSchemas: [
     'tuzi.image.gpt-generation-json',
     TUZI_GPT_IMAGE_EDIT_REQUEST_SCHEMA,

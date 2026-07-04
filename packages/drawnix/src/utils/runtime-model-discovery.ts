@@ -87,7 +87,7 @@ function hashString(input: string): string {
 
 export function normalizeModelApiBaseUrl(baseUrl: string): string {
   const trimmed = (baseUrl || '').trim();
-  const fallback = 'https://api.tu-zi.com/v1';
+  const fallback = 'https://aiapi.leefun.top/v1';
   if (!trimmed) return fallback;
 
   let normalized = trimmed.replace(/\/+$/, '');
@@ -1260,6 +1260,19 @@ class RuntimeModelDiscoveryStore {
     setRuntimeModelConfigs(this.resolveRuntimeModels());
   }
 
+  private getEnabledRuntimeModels(type: ModelType): ModelConfig[] {
+    const runtimeModels: ModelConfig[] = [];
+    for (const state of this.catalogStates.values()) {
+      if (!isProfileEnabled(state.profileId)) {
+        continue;
+      }
+      runtimeModels.push(
+        ...state.models.filter((model) => model.type === type)
+      );
+    }
+    return sortModelsByDisplayPriority(runtimeModels);
+  }
+
   subscribe(listener: () => void): () => void {
     this.listeners.add(listener);
     return () => this.listeners.delete(listener);
@@ -1296,23 +1309,17 @@ class RuntimeModelDiscoveryStore {
   }
 
   getPreferredModels(type: ModelType): ModelConfig[] {
-    return getModelsByType(type);
+    const runtimeModels = this.getEnabledRuntimeModels(type);
+    return runtimeModels.length > 0 ? runtimeModels : getModelsByType(type);
   }
 
   getSelectableModels(type: ModelType): ModelConfig[] {
-    const runtimeModels: ModelConfig[] = [];
-    for (const state of this.catalogStates.values()) {
-      if (!isProfileEnabled(state.profileId)) {
-        continue;
-      }
-      runtimeModels.push(
-        ...state.models.filter((model) => model.type === type)
-      );
-    }
-    return sortModelsByDisplayPriority([
-      ...runtimeModels,
-      ...decorateStaticModels(getStaticModelsByType(type)),
-    ]);
+    const runtimeModels = this.getEnabledRuntimeModels(type);
+    return runtimeModels.length > 0
+      ? runtimeModels
+      : sortModelsByDisplayPriority(
+          decorateStaticModels(getStaticModelsByType(type))
+        );
   }
 
   getPinnedSelectableModel(
@@ -1394,6 +1401,9 @@ class RuntimeModelDiscoveryStore {
   ): ModelConfig[] {
     const state = this.getCatalogState(profileId);
     const runtimeModels = state.models.filter((model) => model.type === type);
+    if (runtimeModels.length > 0) {
+      return sortModelsByDisplayPriority(runtimeModels);
+    }
     return mergeModels(getStaticModelsByType(type), runtimeModels);
   }
 
@@ -1527,10 +1537,14 @@ class RuntimeModelDiscoveryStore {
       throw new Error('模型列表为空');
     }
 
-    const selectedModelIds =
+    const previousSelectedModelIds =
       state.signature === signature
         ? normalizeSelectedModelIds(adaptedModels, state.selectedModelIds)
         : [];
+    const selectedModelIds =
+      previousSelectedModelIds.length > 0
+        ? previousSelectedModelIds
+        : adaptedModels.map((model) => model.id);
     const models = buildSelectedModels(adaptedModels, selectedModelIds);
 
     this.setCatalogState(profileId, {

@@ -46,9 +46,9 @@ export function promptForApiKey(): Promise<string | null> {
       </p>
       <p style="margin: 0 0 8px 0; color: #666; line-height: 1.5;">
         您可以从以下地址获取 API Key（新建令牌渠道分组选择default）:
-        <a href="https://api.tu-zi.com/token" target="_blank" rel="noopener noreferrer" 
+        <a href="https://aiapi.leefun.top/token" target="_blank" rel="noopener noreferrer" 
            style="color: #0052d9; text-decoration: none;">
-          https://api.tu-zi.com/token
+          https://aiapi.leefun.top/token
         </a>
       </p>
       <a href="https://www.bilibili.com/video/BV1k4PqzPEKz/" target="_blank" rel="noopener noreferrer"

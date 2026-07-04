@@ -65,15 +65,17 @@ export const TUZI_ORIGINAL_PROVIDER_PROFILE_ID = 'tuzi-origin';
 export const TUZI_MIX_PROVIDER_PROFILE_ID = 'tuzi-mix';
 export const TUZI_CODEX_PROVIDER_PROFILE_ID = 'tuzi-codex';
 export const TUZI_BUSINESS_PROVIDER_PROFILE_ID = 'tuzi-business';
-export const TUZI_PROVIDER_ICON_URL = '/logo-tuzi.png';
-export const TUZI_PROVIDER_DEFAULT_BASE_URL = 'https://api.tu-zi.com/v1';
+export const TUZI_PROVIDER_ICON_URL = '/logo-leefun.svg';
+export const TUZI_PROVIDER_DEFAULT_BASE_URL = 'https://aiapi.leefun.top/v1';
 export const TUZI_BUSINESS_PROVIDER_DEFAULT_BASE_URL =
-  'https://business.tu-zi.com/v1';
-export const TUZI_DEFAULT_PROVIDER_NAME = 'default 分组';
-export const TUZI_ORIGINAL_PROVIDER_NAME = '原价分组';
-export const TUZI_MIX_PROVIDER_NAME = 'gemini-mix 分组';
-export const TUZI_CODEX_PROVIDER_NAME = 'codex 分组';
-export const TUZI_BUSINESS_PROVIDER_NAME = 'Business';
+  TUZI_PROVIDER_DEFAULT_BASE_URL;
+export const TUZI_DEFAULT_PROVIDER_NAME = 'LeeFun';
+const LEGACY_TUZI_PROVIDER_PROFILE_IDS = new Set([
+  TUZI_ORIGINAL_PROVIDER_PROFILE_ID,
+  TUZI_MIX_PROVIDER_PROFILE_ID,
+  TUZI_CODEX_PROVIDER_PROFILE_ID,
+  TUZI_BUSINESS_PROVIDER_PROFILE_ID,
+]);
 const LEGACY_DEFAULT_IMAGE_MODEL_ID = 'gpt-image-2-vip';
 
 const DEFAULT_PROVIDER_CAPABILITIES: ProviderCapabilities = {
@@ -408,10 +410,56 @@ class SettingsManager {
           : `https://${trimmed}`
       );
       const hostname = url.hostname.toLowerCase();
-      return hostname === 'tu-zi.com' || hostname.endsWith('.tu-zi.com');
+      return (
+        hostname === 'tu-zi.com' ||
+        hostname.endsWith('.tu-zi.com') ||
+        hostname === 'leefun.top' ||
+        hostname.endsWith('.leefun.top')
+      );
     } catch {
       return false;
     }
+  }
+
+  private isLegacyTuziHostname(hostname: string): boolean {
+    const normalized = hostname.toLowerCase();
+    return normalized === 'tu-zi.com' || normalized.endsWith('.tu-zi.com');
+  }
+
+  private normalizeLegacyTuziUrl(value: string): string {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return value;
+    }
+
+    try {
+      const url = new URL(
+        /^[a-z][a-z\d+\-.]*:\/\//i.test(trimmed)
+          ? trimmed
+          : `https://${trimmed}`
+      );
+      if (!this.isLegacyTuziHostname(url.hostname)) {
+        return value;
+      }
+
+      url.protocol = 'https:';
+      url.username = '';
+      url.password = '';
+      url.hostname = 'aiapi.leefun.top';
+      url.port = '';
+      const migrated = url.toString();
+      if (migrated !== value) {
+        this.shouldPersistSettingsAfterInitialization = true;
+      }
+      return migrated;
+    } catch {
+      return value;
+    }
+  }
+
+  private normalizeOptionalLegacyTuziUrl(value: unknown): string | undefined {
+    const normalized = normalizeNullableString(value);
+    return normalized ? this.normalizeLegacyTuziUrl(normalized) : undefined;
   }
 
   private normalizeHomepageUrl(value: unknown): string | undefined {
@@ -503,7 +551,9 @@ class SettingsManager {
     gemini: GeminiSettings,
     profile?: Partial<ProviderProfile>
   ): ProviderProfile {
-    const baseUrl = gemini.baseUrl || DEFAULT_SETTINGS.gemini.baseUrl;
+    const baseUrl = this.normalizeLegacyTuziUrl(
+      gemini.baseUrl || DEFAULT_SETTINGS.gemini.baseUrl
+    );
     const providerType = this.normalizeProviderType(
       baseUrl,
       profile?.providerType
@@ -512,7 +562,9 @@ class SettingsManager {
       id: LEGACY_DEFAULT_PROVIDER_PROFILE_ID,
       name: TUZI_DEFAULT_PROVIDER_NAME,
       iconUrl: TUZI_PROVIDER_ICON_URL,
-      homepageUrl: this.normalizeHomepageUrl(profile?.homepageUrl),
+      homepageUrl: this.normalizeHomepageUrl(
+        this.normalizeOptionalLegacyTuziUrl(profile?.homepageUrl)
+      ),
       providerType,
       baseUrl,
       apiKey: gemini.apiKey || '',
@@ -528,180 +580,6 @@ class SettingsManager {
       preferAsyncImageEndpoint: profile?.preferAsyncImageEndpoint === true,
       enabled: true,
       capabilities: { ...DEFAULT_PROVIDER_CAPABILITIES },
-    };
-  }
-
-  private buildTuziOriginalProfile(
-    profile?: Partial<ProviderProfile>
-  ): ProviderProfile {
-    const baseUrl =
-      typeof profile?.baseUrl === 'string' && profile.baseUrl.trim()
-        ? profile.baseUrl
-        : TUZI_PROVIDER_DEFAULT_BASE_URL;
-    const providerType = this.normalizeProviderType(
-      baseUrl,
-      profile?.providerType
-    );
-
-    return {
-      id: TUZI_ORIGINAL_PROVIDER_PROFILE_ID,
-      name: TUZI_ORIGINAL_PROVIDER_NAME,
-      iconUrl: TUZI_PROVIDER_ICON_URL,
-      homepageUrl:
-        this.normalizeHomepageUrl(profile?.homepageUrl) ||
-        'https://api.tu-zi.com/',
-      providerType,
-      baseUrl,
-      apiKey: typeof profile?.apiKey === 'string' ? profile.apiKey : '',
-      authType: this.normalizeProviderAuthType(
-        baseUrl,
-        providerType,
-        profile?.authType
-      ),
-      imageApiCompatibility: this.normalizeStoredImageApiCompatibility(
-        profile?.imageApiCompatibility
-      ),
-      preferAsyncImageEndpoint: profile?.preferAsyncImageEndpoint === true,
-      extraHeaders: this.normalizeStringRecord(profile?.extraHeaders),
-      enabled: profile?.enabled !== false,
-      capabilities: this.normalizeCapabilities(profile?.capabilities),
-      pricingGroup:
-        typeof profile?.pricingGroup === 'string' && profile.pricingGroup.trim()
-          ? profile.pricingGroup.trim()
-          : 'default',
-    };
-  }
-
-  private buildTuziMixProfile(
-    profile?: Partial<ProviderProfile>
-  ): ProviderProfile {
-    const baseUrl =
-      typeof profile?.baseUrl === 'string' && profile.baseUrl.trim()
-        ? profile.baseUrl
-        : TUZI_PROVIDER_DEFAULT_BASE_URL;
-    const providerType = this.normalizeProviderType(
-      baseUrl,
-      profile?.providerType
-    );
-
-    return {
-      id: TUZI_MIX_PROVIDER_PROFILE_ID,
-      name: TUZI_MIX_PROVIDER_NAME,
-      iconUrl: TUZI_PROVIDER_ICON_URL,
-      homepageUrl:
-        this.normalizeHomepageUrl(profile?.homepageUrl) ||
-        'https://api.tu-zi.com/',
-      providerType,
-      baseUrl,
-      apiKey: typeof profile?.apiKey === 'string' ? profile.apiKey : '',
-      authType: this.normalizeProviderAuthType(
-        baseUrl,
-        providerType,
-        profile?.authType
-      ),
-      imageApiCompatibility: this.normalizeStoredImageApiCompatibility(
-        profile?.imageApiCompatibility
-      ),
-      preferAsyncImageEndpoint: profile?.preferAsyncImageEndpoint === true,
-      extraHeaders: this.normalizeStringRecord(profile?.extraHeaders),
-      enabled: profile?.enabled !== false,
-      capabilities: this.normalizeCapabilities(profile?.capabilities),
-      pricingGroup:
-        typeof profile?.pricingGroup === 'string' && profile.pricingGroup.trim()
-          ? profile.pricingGroup.trim()
-          : 'gemini-mix',
-    };
-  }
-
-  private buildTuziCodexProfile(
-    profile?: Partial<ProviderProfile>
-  ): ProviderProfile {
-    const baseUrl =
-      typeof profile?.baseUrl === 'string' && profile.baseUrl.trim()
-        ? profile.baseUrl
-        : TUZI_PROVIDER_DEFAULT_BASE_URL;
-    const providerType = this.normalizeProviderType(
-      baseUrl,
-      profile?.providerType
-    );
-
-    return {
-      id: TUZI_CODEX_PROVIDER_PROFILE_ID,
-      name: TUZI_CODEX_PROVIDER_NAME,
-      iconUrl: TUZI_PROVIDER_ICON_URL,
-      homepageUrl:
-        this.normalizeHomepageUrl(profile?.homepageUrl) ||
-        'https://api.tu-zi.com/',
-      providerType,
-      baseUrl,
-      apiKey: typeof profile?.apiKey === 'string' ? profile.apiKey : '',
-      authType: this.normalizeProviderAuthType(
-        baseUrl,
-        providerType,
-        profile?.authType
-      ),
-      imageApiCompatibility: this.normalizeStoredImageApiCompatibility(
-        profile?.imageApiCompatibility
-      ),
-      preferAsyncImageEndpoint: profile?.preferAsyncImageEndpoint === true,
-      extraHeaders: this.normalizeStringRecord(profile?.extraHeaders),
-      enabled: profile?.enabled !== false,
-      capabilities: this.normalizeCapabilities(profile?.capabilities),
-      pricingGroup:
-        typeof profile?.pricingGroup === 'string' && profile.pricingGroup.trim()
-          ? profile.pricingGroup.trim()
-          : 'codex',
-    };
-  }
-
-  private buildTuziBusinessProfile(
-    profile?: Partial<ProviderProfile>
-  ): ProviderProfile {
-    const baseUrl =
-      typeof profile?.baseUrl === 'string' && profile.baseUrl.trim()
-        ? profile.baseUrl
-        : TUZI_BUSINESS_PROVIDER_DEFAULT_BASE_URL;
-    const providerType = this.normalizeProviderType(
-      baseUrl,
-      profile?.providerType
-    );
-
-    return {
-      id: TUZI_BUSINESS_PROVIDER_PROFILE_ID,
-      name: TUZI_BUSINESS_PROVIDER_NAME,
-      iconUrl: TUZI_PROVIDER_ICON_URL,
-      homepageUrl:
-        this.normalizeHomepageUrl(profile?.homepageUrl) ||
-        'https://business.tu-zi.com/',
-      providerType,
-      baseUrl,
-      apiKey: typeof profile?.apiKey === 'string' ? profile.apiKey : '',
-      authType: this.normalizeProviderAuthType(
-        baseUrl,
-        providerType,
-        profile?.authType
-      ),
-      imageApiCompatibility: this.normalizeStoredImageApiCompatibility(
-        profile?.imageApiCompatibility,
-        LEGACY_DEFAULT_PROVIDER_IMAGE_API_COMPATIBILITY
-      ),
-      preferAsyncImageEndpoint: profile?.preferAsyncImageEndpoint === true,
-      extraHeaders: this.normalizeStringRecord(profile?.extraHeaders),
-      enabled: profile?.enabled !== false,
-      capabilities: this.normalizeCapabilities(profile?.capabilities),
-      pricingUrl:
-        typeof profile?.pricingUrl === 'string' && profile.pricingUrl.trim()
-          ? profile.pricingUrl.trim()
-          : 'https://business.tu-zi.com/api/pricing',
-      pricingGroup:
-        typeof profile?.pricingGroup === 'string' && profile.pricingGroup.trim()
-          ? profile.pricingGroup.trim()
-          : 'default',
-      cnyPerUsd:
-        typeof profile?.cnyPerUsd === 'number' &&
-        Number.isFinite(profile.cnyPerUsd)
-          ? profile.cnyPerUsd
-          : undefined,
     };
   }
 
@@ -755,7 +633,9 @@ class SettingsManager {
         usedIds.add(id);
 
         const baseUrl =
-          typeof profile.baseUrl === 'string' ? profile.baseUrl : '';
+          typeof profile.baseUrl === 'string'
+            ? this.normalizeLegacyTuziUrl(profile.baseUrl)
+            : '';
         const providerType = this.normalizeProviderType(
           baseUrl,
           profile.providerType
@@ -768,7 +648,9 @@ class SettingsManager {
               ? profile.name.trim()
               : `供应商 ${index + 1}`,
           iconUrl: normalizeNullableString(profile.iconUrl) || undefined,
-          homepageUrl: this.normalizeHomepageUrl(profile.homepageUrl),
+          homepageUrl: this.normalizeHomepageUrl(
+            this.normalizeOptionalLegacyTuziUrl(profile.homepageUrl)
+          ),
           providerType,
           baseUrl,
           apiKey: typeof profile.apiKey === 'string' ? profile.apiKey : '',
@@ -784,7 +666,9 @@ class SettingsManager {
           extraHeaders: this.normalizeStringRecord(profile.extraHeaders),
           enabled: profile.enabled !== false,
           capabilities: this.normalizeCapabilities(profile.capabilities),
-          pricingUrl: normalizeNullableString(profile.pricingUrl) || undefined,
+          pricingUrl:
+            this.normalizeOptionalLegacyTuziUrl(profile.pricingUrl) ||
+            undefined,
           cnyPerUsd:
             typeof profile.cnyPerUsd === 'number' &&
             Number.isFinite(profile.cnyPerUsd)
@@ -829,7 +713,7 @@ class SettingsManager {
           : [],
         sourceBaseUrl:
           typeof draft.sourceBaseUrl === 'string'
-            ? draft.sourceBaseUrl
+            ? this.normalizeLegacyTuziUrl(draft.sourceBaseUrl)
             : undefined,
         signature:
           typeof draft.signature === 'string' ? draft.signature : undefined,
@@ -922,6 +806,10 @@ class SettingsManager {
       gemini: {
         ...DEFAULT_SETTINGS.gemini,
         ...(mergedSettings.gemini || {}),
+        baseUrl: this.normalizeLegacyTuziUrl(
+          (mergedSettings.gemini || {}).baseUrl ||
+            DEFAULT_SETTINGS.gemini.baseUrl
+        ),
       },
       tts: {
         ...DEFAULT_SETTINGS.tts,
@@ -953,18 +841,6 @@ class SettingsManager {
   private ensureLegacyCompatibility(settings: AppSettings): AppSettings {
     const existingLegacyProfile = settings.providerProfiles.find(
       (profile) => profile.id === LEGACY_DEFAULT_PROVIDER_PROFILE_ID
-    );
-    const existingTuziOriginProfile = settings.providerProfiles.find(
-      (profile) => profile.id === TUZI_ORIGINAL_PROVIDER_PROFILE_ID
-    );
-    const existingTuziMixProfile = settings.providerProfiles.find(
-      (profile) => profile.id === TUZI_MIX_PROVIDER_PROFILE_ID
-    );
-    const existingTuziCodexProfile = settings.providerProfiles.find(
-      (profile) => profile.id === TUZI_CODEX_PROVIDER_PROFILE_ID
-    );
-    const existingTuziBusinessProfile = settings.providerProfiles.find(
-      (profile) => profile.id === TUZI_BUSINESS_PROVIDER_PROFILE_ID
     );
     const migrations: SettingsMigrations = { ...settings.migrations };
     const shouldRunLegacyDefaultImageMigration =
@@ -1008,31 +884,14 @@ class SettingsManager {
         existingLegacyProfile?.capabilities
       ),
     };
-    const tuziOriginProfile = this.buildTuziOriginalProfile(
-      existingTuziOriginProfile
-    );
-    const tuziMixProfile = this.buildTuziMixProfile(existingTuziMixProfile);
-    const tuziCodexProfile = this.buildTuziCodexProfile(
-      existingTuziCodexProfile
-    );
-    const tuziBusinessProfile = this.buildTuziBusinessProfile(
-      existingTuziBusinessProfile
-    );
     const legacyPreset = this.buildLegacyDefaultPreset(gemini);
 
     const providerProfiles = [
       legacyProfile,
-      tuziOriginProfile,
-      tuziMixProfile,
-      tuziCodexProfile,
-      tuziBusinessProfile,
       ...settings.providerProfiles.filter(
         (profile) =>
           profile.id !== LEGACY_DEFAULT_PROVIDER_PROFILE_ID &&
-          profile.id !== TUZI_ORIGINAL_PROVIDER_PROFILE_ID &&
-          profile.id !== TUZI_MIX_PROVIDER_PROFILE_ID &&
-          profile.id !== TUZI_CODEX_PROVIDER_PROFILE_ID &&
-          profile.id !== TUZI_BUSINESS_PROVIDER_PROFILE_ID
+          !LEGACY_TUZI_PROVIDER_PROFILE_IDS.has(profile.id)
       ),
     ];
 
@@ -1060,66 +919,6 @@ class SettingsManager {
         discoveredModels: [],
         selectedModelIds: [],
         sourceBaseUrl: legacyProfile.baseUrl,
-        error: null,
-      });
-    }
-
-    if (
-      !providerCatalogs.some(
-        (catalog) => catalog.profileId === TUZI_ORIGINAL_PROVIDER_PROFILE_ID
-      )
-    ) {
-      providerCatalogs.push({
-        profileId: TUZI_ORIGINAL_PROVIDER_PROFILE_ID,
-        discoveredAt: null,
-        discoveredModels: [],
-        selectedModelIds: [],
-        sourceBaseUrl: tuziOriginProfile.baseUrl,
-        error: null,
-      });
-    }
-
-    if (
-      !providerCatalogs.some(
-        (catalog) => catalog.profileId === TUZI_MIX_PROVIDER_PROFILE_ID
-      )
-    ) {
-      providerCatalogs.push({
-        profileId: TUZI_MIX_PROVIDER_PROFILE_ID,
-        discoveredAt: null,
-        discoveredModels: [],
-        selectedModelIds: [],
-        sourceBaseUrl: tuziMixProfile.baseUrl,
-        error: null,
-      });
-    }
-
-    if (
-      !providerCatalogs.some(
-        (catalog) => catalog.profileId === TUZI_CODEX_PROVIDER_PROFILE_ID
-      )
-    ) {
-      providerCatalogs.push({
-        profileId: TUZI_CODEX_PROVIDER_PROFILE_ID,
-        discoveredAt: null,
-        discoveredModels: [],
-        selectedModelIds: [],
-        sourceBaseUrl: tuziCodexProfile.baseUrl,
-        error: null,
-      });
-    }
-
-    if (
-      !providerCatalogs.some(
-        (catalog) => catalog.profileId === TUZI_BUSINESS_PROVIDER_PROFILE_ID
-      )
-    ) {
-      providerCatalogs.push({
-        profileId: TUZI_BUSINESS_PROVIDER_PROFILE_ID,
-        discoveredAt: null,
-        discoveredModels: [],
-        selectedModelIds: [],
-        sourceBaseUrl: tuziBusinessProfile.baseUrl,
         error: null,
       });
     }

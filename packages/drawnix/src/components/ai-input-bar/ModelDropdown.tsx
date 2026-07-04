@@ -55,7 +55,6 @@ import {
 import { compareModelsByDisplayPriority } from '../../utils/model-sort';
 import {
   LEGACY_DEFAULT_PROVIDER_PROFILE_ID,
-  TUZI_ORIGINAL_PROVIDER_PROFILE_ID,
   createModelRef,
   type ModelRef,
   type ProviderProfile,
@@ -489,12 +488,6 @@ export const ModelDropdown: React.FC<ModelDropdownProps> = ({
     const intent: ProviderSettingsIntent =
       lastProfile && lastProfileModelCount === 0
         ? { action: 'select', profileId: lastProfile.id }
-        : availableProfiles.some(
-            (profile) =>
-              profile.id === TUZI_ORIGINAL_PROVIDER_PROFILE_ID &&
-              (providerModelCountMap.get(profile.id) || 0) === 0
-          )
-        ? { action: 'select', profileId: TUZI_ORIGINAL_PROVIDER_PROFILE_ID }
         : { action: 'create' };
 
     (

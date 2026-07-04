@@ -36,7 +36,10 @@ class CharacterAPIService {
   private get baseUrl(): string {
     const settings = geminiSettings.get();
     // Remove /v1 suffix if present, as we append it in the endpoint
-    return (settings.baseUrl || 'https://api.tu-zi.com/v1').replace(/\/v1\/?$/, '');
+    return (settings.baseUrl || 'https://aiapi.leefun.top/v1').replace(
+      /\/v1\/?$/,
+      ''
+    );
   }
 
   /**

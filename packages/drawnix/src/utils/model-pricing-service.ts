@@ -35,6 +35,8 @@ type SharedPricingResponseCacheEntry = {
 
 const TUZI_ROOT_HOST = 'tu-zi.com';
 const TUZI_API_HOST = 'api.tu-zi.com';
+const LEEFUN_ROOT_HOST = 'leefun.top';
+const LEEFUN_API_HOST = 'aiapi.leefun.top';
 const DEFAULT_GROUP_NAME = 'default';
 export const DEFAULT_TUZI_CNY_PER_USD = 0.7;
 export const MODEL_PRICING_CACHE_TTL_MS = 5 * 60 * 1000;
@@ -71,7 +73,12 @@ export function derivePricingUrl(baseUrl: string): string {
 function isTuziProvider(baseUrl: string): boolean {
   try {
     const hostname = new URL(baseUrl).hostname.toLowerCase();
-    return hostname === TUZI_ROOT_HOST || hostname.endsWith(`.${TUZI_ROOT_HOST}`);
+    return (
+      hostname === TUZI_ROOT_HOST ||
+      hostname.endsWith(`.${TUZI_ROOT_HOST}`) ||
+      hostname === LEEFUN_ROOT_HOST ||
+      hostname.endsWith(`.${LEEFUN_ROOT_HOST}`)
+    );
   } catch {
     return false;
   }
@@ -85,14 +92,18 @@ function isTuziPricingUrl(pricingUrl: string): boolean {
     const url = new URL(normalized);
     const hostname = url.hostname.toLowerCase();
     return (
-      (hostname === TUZI_ROOT_HOST || hostname.endsWith(`.${TUZI_ROOT_HOST}`)) &&
+      (hostname === TUZI_ROOT_HOST ||
+        hostname.endsWith(`.${TUZI_ROOT_HOST}`) ||
+        hostname === LEEFUN_ROOT_HOST ||
+        hostname.endsWith(`.${LEEFUN_ROOT_HOST}`)) &&
       url.pathname === '/api/pricing'
     );
   } catch {
-    return (
-      stripPricingUrlSearch(normalized) ===
-      `https://${TUZI_API_HOST}/api/pricing`
-    );
+    const stripped = stripPricingUrlSearch(normalized);
+    return [
+      `https://${TUZI_API_HOST}/api/pricing`,
+      `https://${LEEFUN_API_HOST}/api/pricing`,
+    ].includes(stripped);
   }
 }
 

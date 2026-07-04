@@ -151,7 +151,9 @@ function inferAudioBaseUrlStrategy(
   }
 
   const normalizedBaseUrl = providerContext.baseUrl.trim().toLowerCase();
-  const isTuziRoot = normalizedBaseUrl.includes('.tu-zi.com');
+  const isTuziRoot =
+    normalizedBaseUrl.includes('.tu-zi.com') ||
+    normalizedBaseUrl.includes('.leefun.top');
   const hasLegacyV1Suffix = /\/v1\/?$/.test(normalizedBaseUrl);
 
   if (isTuziRoot && hasLegacyV1Suffix) {

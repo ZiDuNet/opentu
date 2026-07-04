@@ -155,7 +155,7 @@ function resolveGPTImageAdapterForLegacyRoute(
 
   const route = resolveInvocationRoute('image', modelRef || modelId);
   const baseUrl = route.baseUrl.toLowerCase();
-  if (baseUrl.includes('.tu-zi.com')) {
+  if (baseUrl.includes('.tu-zi.com') || baseUrl.includes('.leefun.top')) {
     return findImageAdapterBySchema('tuzi.image.gpt-generation-json');
   }
 

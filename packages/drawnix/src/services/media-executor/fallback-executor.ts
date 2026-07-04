@@ -1394,7 +1394,7 @@ export class FallbackMediaExecutor implements IMediaExecutor {
     return {
       imageConfig: {
         apiKey: imageRoute.apiKey,
-        baseUrl: imageRoute.baseUrl || 'https://api.tu-zi.com/v1',
+        baseUrl: imageRoute.baseUrl || 'https://aiapi.leefun.top/v1',
         modelName: imageRoute.modelId,
         authType:
           imagePlan?.provider.authType || inferAuthTypeFromRoute(imageRoute),
@@ -1409,7 +1409,7 @@ export class FallbackMediaExecutor implements IMediaExecutor {
       },
       textConfig: {
         apiKey: textRoute.apiKey,
-        baseUrl: textRoute.baseUrl || 'https://api.tu-zi.com/v1',
+        baseUrl: textRoute.baseUrl || 'https://aiapi.leefun.top/v1',
         modelName: textRoute.modelId,
         authType:
           textPlan?.provider.authType || inferAuthTypeFromRoute(textRoute),
@@ -1424,7 +1424,7 @@ export class FallbackMediaExecutor implements IMediaExecutor {
         apiKey: videoRoute.apiKey,
         // 规范化 baseUrl，移除尾部 / 或 /v1，便于拼接 /v1/videos
         baseUrl: this.normalizeApiBase(
-          videoRoute.baseUrl || 'https://api.tu-zi.com'
+          videoRoute.baseUrl || 'https://aiapi.leefun.top'
         ),
         authType:
           videoPlan?.provider.authType || inferAuthTypeFromRoute(videoRoute),

@@ -179,7 +179,7 @@
     <div class="container">
       <div class="header">
         <h1>🎨 Opentu iframe 嵌入测试</h1>
-        <p>模拟 api.tu-zi.com 和其他域名嵌入当前应用的效果</p>
+        <p>模拟 aiapi.leefun.top 和其他域名嵌入当前应用的效果</p>
       </div>
 
       <div class="content">
@@ -191,7 +191,7 @@
             <code>7201 -&gt; 7200</code> 的真实跨端口 iframe 嵌入<br />
             <strong>状态:</strong> localhost
             任意端口已在白名单中，应该正常显示<br />
-            <strong>用途:</strong> 复现 <code>api.tu-zi.com/oepntu</code> 嵌入
+            <strong>用途:</strong> 复现 <code>aiapi.leefun.top/oepntu</code> 嵌入
             <code>opentu.ai</code> 的模式
           </div>
           <div class="note">
@@ -228,19 +228,19 @@
           <div id="diagnostics" class="diagnostics">等待开始诊断...</div>
         </div>
 
-        <!-- 模拟 api.tu-zi.com 嵌入 -->
+        <!-- 模拟 aiapi.leefun.top 嵌入 -->
         <div class="test-section">
           <h2>
-            api.tu-zi.com 嵌入测试 <span class="status success">✓ 允许</span>
+            aiapi.leefun.top 嵌入测试 <span class="status success">✓ 允许</span>
           </h2>
           <div class="iframe-info">
-            <strong>场景:</strong> 模拟 api.tu-zi.com 网站嵌入当前应用<br />
-            <strong>状态:</strong> api.tu-zi.com 已在白名单中，应该正常显示<br />
+            <strong>场景:</strong> 模拟 aiapi.leefun.top 网站嵌入当前应用<br />
+            <strong>状态:</strong> aiapi.leefun.top 已在白名单中，应该正常显示<br />
             <strong>用途:</strong> 验证生产环境中的嵌入效果
           </div>
           <div class="note">
             <strong>注意:</strong>
-            这个测试页面本身运行在当前域名下，所以可以成功嵌入。在实际部署中，api.tu-zi.com
+            这个测试页面本身运行在当前域名下，所以可以成功嵌入。在实际部署中，aiapi.leefun.top
             的页面可以通过同样的方式嵌入此应用。
           </div>
           <div class="controls">
@@ -249,7 +249,7 @@
             </button>
             <button
               class="btn btn-primary"
-              onclick="loadAppWithQuery('source=api.tu-zi.com')"
+              onclick="loadAppWithQuery('source=aiapi.leefun.top')"
             >
               带来源参数嵌入
             </button>
@@ -264,7 +264,7 @@
             <iframe
               id="tuzi-iframe"
               src=""
-              title="模拟api.tu-zi.com嵌入"
+              title="模拟aiapi.leefun.top嵌入"
             ></iframe>
           </div>
         </div>
@@ -343,7 +343,7 @@
                 font-size: 0.85em;
               "
             >
-Content-Security-Policy: frame-ancestors 'self' localhost:* 127.0.0.1:* *.localhost:* https://api.tu-zi.com
+Content-Security-Policy: frame-ancestors 'self' localhost:* 127.0.0.1:* *.localhost:* https://aiapi.leefun.top
 # 不再设置 X-Frame-Options，避免与 frame-ancestors 冲突</pre
             >
           </div>
@@ -351,12 +351,12 @@ Content-Security-Policy: frame-ancestors 'self' localhost:* 127.0.0.1:* *.localh
             <strong>当前策略允许嵌入的父域名:</strong><br />
             • localhost (任意端口) - 本地开发环境<br />
             • 127.0.0.1 (任意端口) - 本地IP访问<br />
-            • https://api.tu-zi.com - 生产环境授权域名<br />
+            • https://aiapi.leefun.top - 生产环境授权域名<br />
             • 同域名 (self) - 同域内嵌入
           </div>
           <div class="note">
             <strong>使用说明:</strong><br />
-            1. 在 api.tu-zi.com 的网站中可以使用
+            1. 在 aiapi.leefun.top 的网站中可以使用
             <code>&lt;iframe src="你的应用URL"&gt;&lt;/iframe&gt;</code>
             来嵌入此应用<br />
             2. 其他未授权域名将收到 "Refused to frame" 错误，无法嵌入<br />
@@ -370,7 +370,7 @@ Content-Security-Policy: frame-ancestors 'self' localhost:* 127.0.0.1:* *.localh
             标签查看响应头，确认包含：<br />
             <code
               >Content-Security-Policy: frame-ancestors 'self' localhost:*
-              127.0.0.1:* *.localhost:* https://api.tu-zi.com</code
+              127.0.0.1:* *.localhost:* https://aiapi.leefun.top</code
             >
           </div>
         </div>

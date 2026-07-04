@@ -85,7 +85,7 @@ export const PricingFieldGroup: React.FC<PricingFieldGroupProps> = React.memo(
               onChange={(e) =>
                 onUpdateProfile((p) => ({ ...p, pricingUrl: e.target.value }))
               }
-              placeholder="如 https://api.tu-zi.com/api/pricing"
+              placeholder="如 https://aiapi.leefun.top/api/pricing"
             />
           </div>
           <div className="settings-dialog__field settings-dialog__field--column" style={{ width: 110, flexShrink: 0 }}>

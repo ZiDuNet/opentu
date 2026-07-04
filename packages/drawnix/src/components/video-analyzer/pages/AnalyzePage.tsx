@@ -23,8 +23,6 @@ import {
   type CreativeBrief,
 } from '../../shared/workflow';
 import { useSelectableModels } from '../../../hooks/use-runtime-models';
-import { useProviderProfiles } from '../../../hooks/use-provider-profiles';
-import { useDrawnix } from '../../../hooks/use-drawnix';
 import { ShotTimeline } from '../components/ShotTimeline';
 import { ShotCard } from '../components/ShotCard';
 import { updateRecord } from '../storage';
@@ -35,10 +33,7 @@ import {
 } from '../../../utils/model-selection';
 import { ModelVendor, type ModelConfig } from '../../../constants/model-config';
 import { getVideoModelConfig } from '../../../constants/video-model-config';
-import {
-  TUZI_MIX_PROVIDER_PROFILE_ID,
-  type ModelRef,
-} from '../../../utils/settings-manager';
+import type { ModelRef } from '../../../utils/settings-manager';
 import {
   buildVideoPromptGenerationPrompt,
   readStoredModelSelection,
@@ -73,7 +68,6 @@ const STORAGE_KEY_MODEL = 'video-analyzer:model';
 const STORAGE_KEY_VIDEO_MODEL = 'video-analyzer:video-model';
 const DEFAULT_VIDEO_MODEL = 'veo3';
 const DEFAULT_PROMPT_TARGET_DURATION = 30;
-const SETTINGS_PROVIDER_NAV_EVENT = 'aitu:settings:provider-nav';
 const MAX_PROMPT_PDF_SIZE = 20 * 1024 * 1024;
 
 function formatSize(bytes: number): string {
@@ -106,7 +100,6 @@ export const AnalyzePage: React.FC<AnalyzePageProps> = ({
   onCreateNew,
   onNext,
 }) => {
-  const { setAppState } = useDrawnix();
   const [inputMode, setInputMode] = useState<InputMode>('prompt');
   const [promptText, setPromptText] = useState('');
   const [videoStyle, setVideoStyle] = useState(
@@ -207,7 +200,6 @@ export const AnalyzePage: React.FC<AnalyzePageProps> = ({
   const [analysis, setAnalysis] = useState<VideoAnalysisData | null>(
     existingRecord?.analysis || null
   );
-  const providerProfiles = useProviderProfiles();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pdfInputRef = useRef<HTMLInputElement>(null);
   const previewUrlRef = useRef<string | null>(null);
@@ -358,33 +350,6 @@ export const AnalyzePage: React.FC<AnalyzePageProps> = ({
     () => (isGeminiRequiredForAnalysis ? geminiTextModels : allTextModels),
     [allTextModels, geminiTextModels, isGeminiRequiredForAnalysis]
   );
-  const isGeminiMixConfigured = useMemo(() => {
-    const mixProfile = providerProfiles.find(
-      (profile) => profile.id === TUZI_MIX_PROVIDER_PROFILE_ID
-    );
-    return Boolean(mixProfile?.apiKey.trim());
-  }, [providerProfiles]);
-  const isUsingGeminiMixModel =
-    selectedModelRef?.profileId === TUZI_MIX_PROVIDER_PROFILE_ID;
-
-  const handleOpenGeminiMixSettings = useCallback(() => {
-    const intent = {
-      action: 'select' as const,
-      profileId: TUZI_MIX_PROVIDER_PROFILE_ID,
-    };
-
-    (
-      window as typeof window & {
-        __aituPendingProviderNavigationIntent?: typeof intent;
-      }
-    ).__aituPendingProviderNavigationIntent = intent;
-
-    window.dispatchEvent(
-      new CustomEvent(SETTINGS_PROVIDER_NAV_EVENT, { detail: intent })
-    );
-    setAppState((prev) => ({ ...prev, openSettings: true }));
-  }, [setAppState]);
-
   useEffect(() => {
     if (selectableAnalysisModels.length === 0) return;
     const currentModel = findMatchingSelectableModel(
@@ -1008,18 +973,9 @@ export const AnalyzePage: React.FC<AnalyzePageProps> = ({
                 : '开始分析'}
             </button>
           </div>
-          {isGeminiRequiredForAnalysis && !isUsingGeminiMixModel && (
+          {isGeminiRequiredForAnalysis && geminiTextModels.length === 0 && (
             <div className="va-model-tip">
-              <span>建议使用 gemini-mix 分组的gemini-3.1-pro-preview</span>
-              {!isGeminiMixConfigured && (
-                <button
-                  type="button"
-                  className="va-model-tip-link"
-                  onClick={handleOpenGeminiMixSettings}
-                >
-                  去设置
-                </button>
-              )}
+              <span>请先同步或选择可用于视频/PDF 分析的 Gemini 文本模型</span>
             </div>
           )}
           {error && <div className="va-error">{error}</div>}

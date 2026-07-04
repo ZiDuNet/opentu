@@ -51,7 +51,7 @@ export interface ModelHealthSelection {
 }
 
 // API 端点
-const API_STATUS_BASE_URL = 'https://apistatus.tu-zi.com';
+const API_STATUS_BASE_URL = 'https://aiapi.leefun.top';
 
 // 最小调用间隔（1 分钟）
 const MIN_FETCH_INTERVAL = 60 * 1000;
@@ -284,7 +284,12 @@ export function isTuziApiUrl(baseUrl: string): boolean {
                 : `https://${trimmed}`
         );
         const hostname = url.hostname.toLowerCase();
-        return hostname === 'tu-zi.com' || hostname.endsWith('.tu-zi.com');
+        return (
+            hostname === 'tu-zi.com' ||
+            hostname.endsWith('.tu-zi.com') ||
+            hostname === 'leefun.top' ||
+            hostname.endsWith('.leefun.top')
+        );
     } catch {
         return false;
     }

@@ -15,7 +15,7 @@ import {
   type ProviderModelBinding,
 } from './provider-routing';
 
-const DEFAULT_BASE_URL = 'https://api.tu-zi.com/v1';
+const DEFAULT_BASE_URL = 'https://aiapi.leefun.top/v1';
 
 function normalizeString(value: unknown): string | null {
   return typeof value === 'string' && value.trim() ? value.trim() : null;

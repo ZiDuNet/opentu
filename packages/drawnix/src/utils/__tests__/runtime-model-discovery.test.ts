@@ -146,6 +146,59 @@ describe('runtime-model-discovery', () => {
     expect(result.removedModelIds).toEqual(['model-a']);
   });
 
+  it('有远端可选模型时不会混入静态内置模型', async () => {
+    vi.doMock('../settings-manager', () => ({
+      LEGACY_DEFAULT_PROVIDER_PROFILE_ID: 'legacy-default',
+      providerCatalogsSettings: {
+        get: () => [
+          {
+            profileId: 'provider-text',
+            discoveredAt: Date.now(),
+            discoveredModels: [
+              {
+                id: 'leefun-chat',
+                label: 'LeeFun Chat',
+                shortLabel: 'LeeFun',
+                type: 'text',
+                vendor: 'OTHER',
+              },
+            ],
+            selectedModelIds: ['leefun-chat'],
+          },
+        ],
+        addListener: () => {},
+        removeListener: () => {},
+        update: async () => {},
+      },
+      providerProfilesSettings: {
+        get: () => [
+          {
+            id: 'provider-text',
+            name: 'LeeFun',
+            enabled: true,
+          },
+        ],
+        addListener: () => {},
+        removeListener: () => {},
+      },
+      invocationPresetsSettings: {
+        addListener: () => {},
+        removeListener: () => {},
+      },
+      settingsManager: {
+        getSetting: () => ({}),
+        addListener: () => {},
+        removeListener: () => {},
+      },
+    }));
+
+    const { getSelectableModels } = await import('../runtime-model-discovery');
+
+    expect(getSelectableModels('text').map((model) => model.id)).toEqual([
+      'leefun-chat',
+    ]);
+  });
+
   it('加载旧目录时会刷新 HappyHorse 的供应商分类', async () => {
     vi.doMock('../settings-manager', () => ({
       LEGACY_DEFAULT_PROVIDER_PROFILE_ID: 'legacy-default',
