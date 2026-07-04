@@ -125,7 +125,7 @@ describe('cdn-fallback', () => {
     ).toBe('https://cdn.jsdelivr.net/npm/winbox@0.2.82/dist/winbox.bundle.min.js');
   });
 
-  it('uses CDN first for same-origin absolute asset URLs', async () => {
+  it('keeps same-origin absolute asset URLs local when local-first is requested', async () => {
     const fetchMock = vi
       .spyOn(globalThis, 'fetch')
       .mockImplementation(async (input: RequestInfo | URL) => {
@@ -153,13 +153,14 @@ describe('cdn-fallback', () => {
     const result = await fetchFromCDNWithFallback(
       'https://pr.opentu.ai/assets/yacas-BJ4BC0dw.js',
       '3.0.0',
-      'https://pr.opentu.ai'
+      'https://pr.opentu.ai',
+      { preferLocal: true }
     );
 
-    expect(result?.source).toBe('jsdelivr');
+    expect(result?.source).toBe('local');
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(fetchMock.mock.calls[0]?.[0]).toBe(
-      'https://cdn.jsdelivr.net/npm/aitu-app@3.0.0/assets/yacas-BJ4BC0dw.js'
+      'https://pr.opentu.ai/assets/yacas-BJ4BC0dw.js'
     );
   });
 
@@ -333,7 +334,7 @@ describe('cdn-fallback', () => {
     );
   });
 
-  it('still probes unhealthy CDN first during background prefetch', async () => {
+  it('keeps background prefetch local-first when requested', async () => {
     markCDNFailure('jsdelivr', 'timeout');
     markCDNFailure('jsdelivr', 'timeout');
     markCDNFailure('jsdelivr', 'timeout');
@@ -367,19 +368,15 @@ describe('cdn-fallback', () => {
       '3.0.0',
       'https://origin.example.com',
       {
+        preferLocal: true,
         requestKind: 'background-prefetch',
       }
     );
 
-    expect(result?.source).toBe('jsdelivr');
+    expect(result?.source).toBe('local');
     expect(fetchMock.mock.calls[0]?.[0]).toContain(
-      'https://cdn.jsdelivr.net/npm/aitu-app@3.0.0/assets/settings-dialog-CCOMaxX1.js'
+      'https://origin.example.com/assets/settings-dialog-CCOMaxX1.js'
     );
-    expect(
-      fetchMock.mock.calls.some(([input]) =>
-        String(input).startsWith('https://origin.example.com/')
-      )
-    ).toBe(false);
   });
 
   it('includes fail count and cooldown info in status report', () => {

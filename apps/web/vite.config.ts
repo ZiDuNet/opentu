@@ -13,7 +13,7 @@ const require = createRequire(import.meta.url);
 const workspaceRoot = path.resolve(__dirname, '../..');
 
 const shouldRewriteEntryAssetsToCDN =
-  process.env.AITU_REWRITE_ENTRY_ASSETS_TO_CDN !== '0';
+  process.env.AITU_REWRITE_ENTRY_ASSETS_TO_CDN === '1';
 
 // Read version from public/version.json
 const versionPath = path.resolve(__dirname, 'public/version.json');

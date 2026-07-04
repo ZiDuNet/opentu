@@ -2160,7 +2160,7 @@ async function cacheFile(
         APP_VERSION,
         SW_SCOPE_BASE_URL.href.replace(/\/$/, ''),
         {
-          preferLocal: false,
+          preferLocal: true,
           requestKind: 'background-prefetch',
         }
       );
